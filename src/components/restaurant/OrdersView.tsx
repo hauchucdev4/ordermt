@@ -58,7 +58,7 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
       table_name: tableMap.get(o.table_id) || "Bàn ?",
       items: (orderItems || [])
         .filter((oi) => oi.order_id === o.id)
-        .map((oi) => ({ name: menuMap.get(oi.menu_item_id) || "?", quantity: oi.quantity, status: oi.status })),
+        .map((oi) => ({ name: menuMap.get(oi.menu_item_id) || "?", quantity: oi.quantity, status: oi.status as string })),
     }));
 
     setOrders(enriched);
