@@ -19,6 +19,7 @@ import CreateAdmin from "./pages/superadmin/CreateAdmin";
 // Admin
 import AdminLayout from "./pages/admin/AdminLayout";
 import MyRestaurants from "./pages/admin/MyRestaurants";
+import RestaurantDetail from "./pages/admin/RestaurantDetail";
 
 // Manager
 import ManagerLayout from "./pages/manager/ManagerLayout";
@@ -55,6 +56,7 @@ const App = () => (
             {/* Admin */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayout /></ProtectedRoute>}>
               <Route index element={<MyRestaurants />} />
+              <Route path="restaurant/:id" element={<RestaurantDetail />} />
               <Route path="reports" element={<div className="text-muted-foreground">Báo cáo doanh thu (sắp có)</div>} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
