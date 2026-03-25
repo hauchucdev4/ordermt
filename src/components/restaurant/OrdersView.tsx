@@ -51,7 +51,7 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
     const { data: menuItems } = menuItemIds.length > 0
       ? await supabase.from("menu_items").select("id, name").in("id", menuItemIds)
       : { data: [] };
-    const menuMap = new Map(menuItems?.map((m) => [m.id, m.name]) || []);
+    const menuMap = new Map<string, string>(menuItems?.map((m) => [m.id, m.name] as [string, string]) || []);
 
     const enriched: OrderWithDetails[] = ordersData.map((o) => ({
       ...o,
