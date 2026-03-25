@@ -45,7 +45,7 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full" onClick={() => { const { signOut } = useAuth(); signOut(); }}>
+              <Button variant="outline" className="w-full" onClick={() => signOut()}>
                 Đăng xuất
               </Button>
             </CardContent>
