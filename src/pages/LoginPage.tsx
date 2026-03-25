@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UtensilsCrossed, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const { signIn, signUp, profile, loading, user } = useAuth();
+  const { signIn, signUp, signOut, profile, loading, user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
