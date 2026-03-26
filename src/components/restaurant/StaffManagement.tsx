@@ -63,7 +63,7 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
 
   const fetchStaff = async () => {
     setLoading(true);
-    const roles = managerMode ? ["staff", "chef"] : ["manager", "staff", "chef"];
+    const roles: ("manager" | "staff" | "chef")[] = managerMode ? ["staff", "chef"] : ["manager", "staff", "chef"];
     const { data } = await supabase
       .from("profiles")
       .select("*")

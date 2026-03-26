@@ -96,7 +96,9 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
       const { data: menuItems } = menuIds.length > 0
         ? await supabase.from("menu_items").select("id, name, price").in("id", menuIds)
         : { data: [] };
-      const menuMap = new Map(menuItems?.map(m => [m.id, { name: m.name, price: Number(m.price) }]) || []);
+      const menuMap = new Map<string, { name: string; price: number }>(
+        menuItems?.map(m => [m.id, { name: m.name, price: Number(m.price) }] as [string, { name: string; price: number }]) || []
+      );
 
       const details: TableDetail[] = paidOrders.map(o => {
         const items = (orderItems || [])
