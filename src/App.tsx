@@ -25,6 +25,7 @@ import RestaurantDetail from "./pages/admin/RestaurantDetail";
 import ManagerLayout from "./pages/manager/ManagerLayout";
 import ManagerStaffPage from "./pages/manager/ManagerStaffPage";
 import ManagerReportsPage from "./pages/manager/ManagerReportsPage";
+import ManagerBillPage from "./pages/manager/ManagerBillPage";
 
 // Staff
 import StaffLayout from "./pages/staff/StaffLayout";
