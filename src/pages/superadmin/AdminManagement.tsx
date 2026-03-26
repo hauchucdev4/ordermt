@@ -4,25 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Lock, Unlock, Trash2, Edit, KeyRound, Loader2 } from "lucide-react";
+import { Search, Lock, Unlock, Trash2, Edit, KeyRound, Loader2, Eye, X, Store } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+
+// Admin dashboard components for impersonate
+import MyRestaurants from "@/pages/admin/MyRestaurants";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -33,22 +26,22 @@ export default function AdminManagement() {
   const [filter, setFilter] = useState<"all" | "active" | "pending" | "locked">("all");
   const { toast } = useToast();
 
-  // Edit dialog
   const [editAdmin, setEditAdmin] = useState<Profile | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
 
-  // Reset password dialog
   const [resetAdmin, setResetAdmin] = useState<Profile | null>(null);
   const [resetPw, setResetPw] = useState("");
   const [resetConfirm, setResetConfirm] = useState("");
 
-  // Unlock dialog
   const [unlockAdmin, setUnlockAdmin] = useState<Profile | null>(null);
   const [unlockType, setUnlockType] = useState<"permanent" | "timed">("permanent");
   const [unlockDate, setUnlockDate] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
+
+  // Impersonate state
+  const [impersonating, setImpersonating] = useState<Profile | null>(null);
 
   const fetchAdmins = async () => {
     setLoading(true);
@@ -116,7 +109,6 @@ export default function AdminManagement() {
     if (resetPw.length < 8) { toast({ title: "Lỗi", description: "Tối thiểu 8 ký tự", variant: "destructive" }); return; }
     if (resetPw !== resetConfirm) { toast({ title: "Lỗi", description: "Mật khẩu không khớp", variant: "destructive" }); return; }
     setSubmitting(true);
-    // Use edge function for admin password reset
     const { error } = await supabase.functions.invoke("admin-reset-password", {
       body: { userId: resetAdmin.id, newPassword: resetPw },
     });
@@ -140,6 +132,24 @@ export default function AdminManagement() {
     const info = map[status] || map.pending;
     return <Badge variant={info.variant}>{info.label}</Badge>;
   };
+
+  // If impersonating, show admin dashboard view
+  if (impersonating) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <div className="bg-warning/10 border border-warning rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Eye className="h-4 w-4 text-warning" />
+            <span className="text-sm font-medium">Bạn đang xem với tư cách <strong>{impersonating.full_name}</strong></span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setImpersonating(null)}>
+            <X className="mr-1 h-3 w-3" /> Thoát
+          </Button>
+        </div>
+        <ImpersonateAdminView adminId={impersonating.id} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -184,6 +194,9 @@ export default function AdminManagement() {
                   <TableCell>{new Date(admin.created_at).toLocaleDateString("vi-VN")}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" title="Xem với tư cách admin" onClick={() => setImpersonating(admin)}>
+                        <Eye className="h-4 w-4 text-primary" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => { setEditAdmin(admin); setEditName(admin.full_name || ""); setEditEmail(admin.email); }}>
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -214,23 +227,13 @@ export default function AdminManagement() {
       {/* Edit Dialog */}
       <Dialog open={!!editAdmin} onOpenChange={(open) => !open && setEditAdmin(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Chỉnh sửa Admin</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Chỉnh sửa Admin</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Họ tên</Label>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
-            </div>
+            <div className="space-y-2"><Label>Họ tên</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Email</Label><Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} /></div>
           </div>
           <DialogFooter>
-            <Button onClick={handleEdit} disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu
-            </Button>
+            <Button onClick={handleEdit} disabled={submitting}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -238,23 +241,13 @@ export default function AdminManagement() {
       {/* Reset Password Dialog */}
       <Dialog open={!!resetAdmin} onOpenChange={(open) => !open && setResetAdmin(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Đặt lại mật khẩu cho {resetAdmin?.full_name}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Đặt lại mật khẩu cho {resetAdmin?.full_name}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Mật khẩu mới</Label>
-              <Input type="password" value={resetPw} onChange={(e) => setResetPw(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Xác nhận mật khẩu</Label>
-              <Input type="password" value={resetConfirm} onChange={(e) => setResetConfirm(e.target.value)} />
-            </div>
+            <div className="space-y-2"><Label>Mật khẩu mới</Label><Input type="password" value={resetPw} onChange={(e) => setResetPw(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Xác nhận mật khẩu</Label><Input type="password" value={resetConfirm} onChange={(e) => setResetConfirm(e.target.value)} /></div>
           </div>
           <DialogFooter>
-            <Button onClick={handleResetPassword} disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Đặt lại
-            </Button>
+            <Button onClick={handleResetPassword} disabled={submitting}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Đặt lại</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -268,27 +261,117 @@ export default function AdminManagement() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex gap-2">
-              <Button variant={unlockType === "permanent" ? "default" : "outline"} onClick={() => setUnlockType("permanent")} size="sm">
-                Mở khóa vĩnh viễn
-              </Button>
-              <Button variant={unlockType === "timed" ? "default" : "outline"} onClick={() => setUnlockType("timed")} size="sm">
-                Đặt thời hạn
-              </Button>
+              <Button variant={unlockType === "permanent" ? "default" : "outline"} onClick={() => setUnlockType("permanent")} size="sm">Mở khóa vĩnh viễn</Button>
+              <Button variant={unlockType === "timed" ? "default" : "outline"} onClick={() => setUnlockType("timed")} size="sm">Đặt thời hạn</Button>
             </div>
             {unlockType === "timed" && (
-              <div className="space-y-2">
-                <Label>Khóa lại vào</Label>
-                <Input type="datetime-local" value={unlockDate} onChange={(e) => setUnlockDate(e.target.value)} />
-              </div>
+              <div className="space-y-2"><Label>Khóa lại vào</Label><Input type="datetime-local" value={unlockDate} onChange={(e) => setUnlockDate(e.target.value)} /></div>
             )}
           </div>
           <DialogFooter>
-            <Button onClick={handleUnlock} disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Xác nhận
-            </Button>
+            <Button onClick={handleUnlock} disabled={submitting}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Xác nhận</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// Impersonate view: show restaurants of the admin
+function ImpersonateAdminView({ adminId }: { adminId: string }) {
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.from("restaurants").select("*").eq("admin_id", adminId).order("name")
+      .then(({ data }) => {
+        setRestaurants(data || []);
+        setLoading(false);
+      });
+  }, [adminId]);
+
+  if (loading) {
+    return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (selectedId) {
+    const RestaurantDetail = require("@/pages/admin/RestaurantDetail").default;
+    // We can't use RestaurantDetail directly as it uses useParams, so render inline tabs
+    return <ImpersonateRestaurantDetail restaurantId={selectedId} onBack={() => setSelectedId(null)} />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold">Nhà hàng</h2>
+      {restaurants.length === 0 ? (
+        <p className="text-muted-foreground">Admin này chưa có nhà hàng nào</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {restaurants.map(r => (
+            <div
+              key={r.id}
+              className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary"
+              onClick={() => setSelectedId(r.id)}
+            >
+              <div className="flex items-center gap-3">
+                <Store className="h-8 w-8 text-primary" />
+                <div>
+                  <h3 className="font-semibold">{r.name}</h3>
+                  {r.address && <p className="text-sm text-muted-foreground">{r.address}</p>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Inline restaurant detail for impersonate mode
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import StaffManagement from "@/components/restaurant/StaffManagement";
+import MenuManagement from "@/components/restaurant/MenuManagement";
+import TableManagement from "@/components/restaurant/TableManagement";
+import OrdersView from "@/components/restaurant/OrdersView";
+import RevenueReport from "@/components/restaurant/RevenueReport";
+import { ArrowLeft } from "lucide-react";
+
+function ImpersonateRestaurantDetail({ restaurantId, onBack }: { restaurantId: string; onBack: () => void }) {
+  const [restaurant, setRestaurant] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.from("restaurants").select("*").eq("id", restaurantId).single()
+      .then(({ data }) => setRestaurant(data));
+  }, [restaurantId]);
+
+  if (!restaurant) return <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="h-4 w-4" /></Button>
+        <div>
+          <h2 className="text-xl font-bold">{restaurant.name}</h2>
+          {restaurant.address && <p className="text-sm text-muted-foreground">{restaurant.address}</p>}
+        </div>
+      </div>
+
+      <Tabs defaultValue="staff" className="w-full">
+        <TabsList className="w-full justify-start flex-wrap h-auto gap-1">
+          <TabsTrigger value="staff">Nhân viên</TabsTrigger>
+          <TabsTrigger value="menu">Thực đơn</TabsTrigger>
+          <TabsTrigger value="tables">Bàn</TabsTrigger>
+          <TabsTrigger value="orders">Order</TabsTrigger>
+          <TabsTrigger value="reports">Doanh thu</TabsTrigger>
+        </TabsList>
+        <TabsContent value="staff" className="mt-4"><StaffManagement restaurantId={restaurant.id} /></TabsContent>
+        <TabsContent value="menu" className="mt-4"><MenuManagement restaurantId={restaurant.id} /></TabsContent>
+        <TabsContent value="tables" className="mt-4"><TableManagement restaurantId={restaurant.id} /></TabsContent>
+        <TabsContent value="orders" className="mt-4"><OrdersView restaurantId={restaurant.id} /></TabsContent>
+        <TabsContent value="reports" className="mt-4"><RevenueReport restaurantId={restaurant.id} /></TabsContent>
+      </Tabs>
     </div>
   );
 }
