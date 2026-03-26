@@ -20,6 +20,7 @@ import CreateAdmin from "./pages/superadmin/CreateAdmin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import MyRestaurants from "./pages/admin/MyRestaurants";
 import RestaurantDetail from "./pages/admin/RestaurantDetail";
+import AdminReportsPage from "./pages/admin/AdminReportsPage";
 
 // Manager
 import ManagerLayout from "./pages/manager/ManagerLayout";
