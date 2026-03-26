@@ -60,7 +60,7 @@ const App = () => (
             {/* Admin */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayout /></ProtectedRoute>}>
               <Route index element={<MyRestaurants />} />
-              <Route path="restaurant/:id" element={<RestaurantDetail />} />
+              <Route path="reports" element={<AdminReportsPage />} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
 
