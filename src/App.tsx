@@ -67,6 +67,7 @@ const App = () => (
             <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerLayout /></ProtectedRoute>}>
               <Route index element={<StaffOrderPage />} />
               <Route path="kitchen" element={<ChefKitchenPage />} />
+              <Route path="billing" element={<ManagerBillPage />} />
               <Route path="staff" element={<ManagerStaffPage />} />
               <Route path="reports" element={<ManagerReportsPage />} />
               <Route path="settings" element={<AccountSettings />} />
