@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, KeyRound } from "lucide-react";
+import { Loader2, Save, KeyRound, Upload } from "lucide-react";
 
 export default function AccountSettings() {
   const { profile, refreshProfile } = useAuth();
@@ -16,11 +16,38 @@ export default function AccountSettings() {
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [changingPw, setChangingPw] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+    setUploading(true);
+
+    const ext = file.name.split(".").pop();
+    const path = `${profile.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true });
+
+    if (uploadError) {
+      toast({ title: "Lỗi", description: uploadError.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+
+    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", profile.id);
+    toast({ title: "Đã cập nhật ảnh đại diện" });
+    setUploading(false);
+    refreshProfile();
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +77,6 @@ export default function AccountSettings() {
       return;
     }
     setChangingPw(true);
-    // Verify current password by re-signing in
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: profile?.email || "",
       password: currentPw,
@@ -74,6 +100,18 @@ export default function AccountSettings() {
 
   if (!profile) return null;
 
+  const initials = profile.full_name
+    ? profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    : "U";
+
+  const roleLabels: Record<string, string> = {
+    superadmin: "Super Admin",
+    admin: "Admin",
+    manager: "Quản lý",
+    staff: "Nhân viên",
+    chef: "Đầu bếp",
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <h1 className="text-2xl font-bold">Cài đặt tài khoản</h1>
@@ -85,6 +123,21 @@ export default function AccountSettings() {
             <CardDescription>Cập nhật thông tin hồ sơ của bạn</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Avatar */}
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={profile.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">{initials}</AvatarFallback>
+              </Avatar>
+              <div>
+                <Label htmlFor="avatar-upload" className="cursor-pointer inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploading ? "Đang tải..." : "Thay đổi ảnh đại diện"}
+                </Label>
+                <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Họ tên</Label>
               <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -100,7 +153,7 @@ export default function AccountSettings() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Vai trò:</span>
-                <span className="ml-2 font-medium capitalize">{profile.role}</span>
+                <span className="ml-2 font-medium">{roleLabels[profile.role] || profile.role}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">Ngày tạo:</span>
