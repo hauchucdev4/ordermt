@@ -23,6 +23,8 @@ import RestaurantDetail from "./pages/admin/RestaurantDetail";
 
 // Manager
 import ManagerLayout from "./pages/manager/ManagerLayout";
+import ManagerStaffPage from "./pages/manager/ManagerStaffPage";
+import ManagerReportsPage from "./pages/manager/ManagerReportsPage";
 
 // Staff
 import StaffLayout from "./pages/staff/StaffLayout";
@@ -57,7 +59,6 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLayout /></ProtectedRoute>}>
               <Route index element={<MyRestaurants />} />
               <Route path="restaurant/:id" element={<RestaurantDetail />} />
-              <Route path="reports" element={<div className="text-muted-foreground">Báo cáo doanh thu (sắp có)</div>} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
 
@@ -65,8 +66,8 @@ const App = () => (
             <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerLayout /></ProtectedRoute>}>
               <Route index element={<StaffOrderPage />} />
               <Route path="kitchen" element={<ChefKitchenPage />} />
-              <Route path="staff" element={<div className="text-muted-foreground">Quản lý nhân viên (sắp có)</div>} />
-              <Route path="reports" element={<div className="text-muted-foreground">Báo cáo doanh thu (sắp có)</div>} />
+              <Route path="staff" element={<ManagerStaffPage />} />
+              <Route path="reports" element={<ManagerReportsPage />} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
 

@@ -22,20 +22,28 @@ import type { Database } from "@/integrations/supabase/types";
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type AppRole = Database["public"]["Enums"]["app_role"];
 
-const STAFF_ROLES: { value: AppRole; label: string }[] = [
+interface StaffManagementProps {
+  restaurantId: string;
+  managerMode?: boolean;
+}
+
+const ALL_STAFF_ROLES: { value: AppRole; label: string }[] = [
   { value: "manager", label: "Quản lý" },
   { value: "staff", label: "Nhân viên" },
   { value: "chef", label: "Đầu bếp" },
 ];
 
-export default function StaffManagement({ restaurantId }: { restaurantId: string }) {
+export default function StaffManagement({ restaurantId, managerMode = false }: StaffManagementProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [staff, setStaff] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterRole, setFilterRole] = useState<string>("all");
 
-  // Add staff dialog
+  const STAFF_ROLES = managerMode
+    ? ALL_STAFF_ROLES.filter(r => r.value !== "manager")
+    : ALL_STAFF_ROLES;
+
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -43,13 +51,11 @@ export default function StaffManagement({ restaurantId }: { restaurantId: string
   const [role, setRole] = useState<AppRole>("staff");
   const [submitting, setSubmitting] = useState(false);
 
-  // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Profile | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
 
-  // Reset password dialog
   const [resetOpen, setResetOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState<Profile | null>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -57,11 +63,12 @@ export default function StaffManagement({ restaurantId }: { restaurantId: string
 
   const fetchStaff = async () => {
     setLoading(true);
+    const roles = managerMode ? ["staff", "chef"] : ["manager", "staff", "chef"];
     const { data } = await supabase
       .from("profiles")
       .select("*")
       .eq("restaurant_id", restaurantId)
-      .in("role", ["manager", "staff", "chef"])
+      .in("role", roles)
       .order("created_at", { ascending: false });
     setStaff(data || []);
     setLoading(false);
@@ -72,7 +79,6 @@ export default function StaffManagement({ restaurantId }: { restaurantId: string
   const handleAddStaff = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) return;
     setSubmitting(true);
-    const { data: { session } } = await supabase.auth.getSession();
     const res = await supabase.functions.invoke("admin-create-user", {
       body: { email: email.trim(), password, fullName: name.trim(), role, restaurantId },
     });
@@ -129,7 +135,7 @@ export default function StaffManagement({ restaurantId }: { restaurantId: string
 
   const filtered = filterRole === "all" ? staff : staff.filter((s) => s.role === filterRole);
 
-  const roleLabel = (r: string) => STAFF_ROLES.find((sr) => sr.value === r)?.label || r;
+  const roleLabel = (r: string) => ALL_STAFF_ROLES.find((sr) => sr.value === r)?.label || r;
   const roleBadgeVariant = (r: string) => {
     if (r === "manager") return "default" as const;
     if (r === "chef") return "secondary" as const;
@@ -143,19 +149,15 @@ export default function StaffManagement({ restaurantId }: { restaurantId: string
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Select value={filterRole} onValueChange={setFilterRole}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              {STAFF_ROLES.map((r) => (
-                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={filterRole} onValueChange={setFilterRole}>
+          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả</SelectItem>
+            {STAFF_ROLES.map((r) => (
+              <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
@@ -247,7 +249,6 @@ export default function StaffManagement({ restaurantId }: { restaurantId: string
         </div>
       )}
 
-      {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Chỉnh sửa thông tin</DialogTitle></DialogHeader>
@@ -269,7 +270,6 @@ export default function StaffManagement({ restaurantId }: { restaurantId: string
         </DialogContent>
       </Dialog>
 
-      {/* Reset Password Dialog */}
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Đặt lại mật khẩu cho {resetTarget?.full_name}</DialogTitle></DialogHeader>
