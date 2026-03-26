@@ -296,8 +296,6 @@ function ImpersonateAdminView({ adminId }: { adminId: string }) {
   }
 
   if (selectedId) {
-    const RestaurantDetail = require("@/pages/admin/RestaurantDetail").default;
-    // We can't use RestaurantDetail directly as it uses useParams, so render inline tabs
     return <ImpersonateRestaurantDetail restaurantId={selectedId} onBack={() => setSelectedId(null)} />;
   }
 
