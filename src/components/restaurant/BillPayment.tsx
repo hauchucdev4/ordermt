@@ -1,0 +1,222 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, Receipt, CreditCard, FileText } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
+
+type TableRow = Database["public"]["Tables"]["tables"]["Row"];
+
+interface BillItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface TableBill {
+  table: TableRow;
+  orderId: string;
+  items: BillItem[];
+  total: number;
+  createdAt: string;
+}
+
+export default function BillPayment({ restaurantId, restaurantName }: { restaurantId: string; restaurantName?: string }) {
+  const { toast } = useToast();
+  const [tables, setTables] = useState<TableRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBill, setSelectedBill] = useState<TableBill | null>(null);
+  const [paying, setPaying] = useState(false);
+
+  const fetchOccupiedTables = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("tables")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .eq("status", "occupied")
+      .order("name");
+    setTables(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchOccupiedTables(); }, [restaurantId]);
+
+  const viewBill = async (table: TableRow) => {
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("table_id", table.id)
+      .eq("status", "open")
+      .limit(1);
+
+    if (!orders || orders.length === 0) {
+      toast({ title: "Không có order", description: "Bàn này chưa có order nào", variant: "destructive" });
+      return;
+    }
+
+    const order = orders[0];
+    const { data: orderItems } = await supabase
+      .from("order_items")
+      .select("*, menu_items(name, price)")
+      .eq("order_id", order.id)
+      .eq("status", "done");
+
+    const items: BillItem[] = (orderItems || []).map((oi: any) => ({
+      name: oi.menu_items?.name || "?",
+      quantity: oi.quantity,
+      price: Number(oi.menu_items?.price || 0),
+    }));
+
+    const total = items.reduce((s, i) => s + i.quantity * i.price, 0);
+
+    setSelectedBill({
+      table,
+      orderId: order.id,
+      items,
+      total,
+      createdAt: order.created_at,
+    });
+  };
+
+  const handlePay = async () => {
+    if (!selectedBill) return;
+    setPaying(true);
+
+    await supabase
+      .from("orders")
+      .update({ status: "paid" as const, total: selectedBill.total, paid_at: new Date().toISOString() })
+      .eq("id", selectedBill.orderId);
+
+    await supabase
+      .from("tables")
+      .update({ status: "empty" as const })
+      .eq("id", selectedBill.table.id);
+
+    toast({ title: "Thanh toán thành công", description: `${selectedBill.table.name} - ${selectedBill.total.toLocaleString("vi-VN")}₫` });
+    setPaying(false);
+    setSelectedBill(null);
+    fetchOccupiedTables();
+  };
+
+  const printBill = () => {
+    if (!selectedBill) return;
+    import("jspdf").then(({ default: jsPDF }) => {
+      import("jspdf-autotable").then(({ default: autoTable }) => {
+        const doc = new jsPDF({ unit: "mm", format: [80, 200] });
+        const w = 80;
+
+        doc.setFontSize(12);
+        doc.text(restaurantName || "Nhà hàng", w / 2, 10, { align: "center" });
+        doc.setFontSize(8);
+        doc.text(`${selectedBill.table.name}`, w / 2, 16, { align: "center" });
+        doc.text(new Date().toLocaleString("vi-VN"), w / 2, 20, { align: "center" });
+
+        doc.setLineWidth(0.3);
+        doc.line(5, 23, w - 5, 23);
+
+        autoTable(doc, {
+          startY: 26,
+          margin: { left: 5, right: 5 },
+          head: [["Món", "SL", "Giá", "T.Tiền"]],
+          body: selectedBill.items.map(i => [
+            i.name,
+            i.quantity.toString(),
+            i.price.toLocaleString("vi-VN"),
+            (i.quantity * i.price).toLocaleString("vi-VN"),
+          ]),
+          styles: { fontSize: 7, cellPadding: 1 },
+          headStyles: { fillColor: [50, 50, 50] },
+          theme: "grid",
+        });
+
+        const finalY = (doc as any).lastAutoTable?.finalY || 60;
+        doc.setFontSize(10);
+        doc.text(`TỔNG: ${selectedBill.total.toLocaleString("vi-VN")}₫`, w / 2, finalY + 6, { align: "center" });
+        doc.setFontSize(8);
+        doc.text("ĐÃ THANH TOÁN", w / 2, finalY + 12, { align: "center" });
+        doc.text("Cảm ơn quý khách!", w / 2, finalY + 17, { align: "center" });
+
+        doc.save(`bill-${selectedBill.table.name}-${Date.now()}.pdf`);
+      });
+    });
+  };
+
+  if (loading) {
+    return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {tables.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Không có bàn nào cần thanh toán</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {tables.map(t => (
+            <Card key={t.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => viewBill(t)}>
+              <CardContent className="p-4 text-center">
+                <p className="font-bold text-lg">{t.name}</p>
+                <Badge className="bg-accent text-accent-foreground mt-1">Có khách</Badge>
+                <p className="text-xs text-muted-foreground mt-2">Nhấn để thanh toán</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={!!selectedBill} onOpenChange={open => !open && setSelectedBill(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" /> Bill - {selectedBill?.table.name}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedBill && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {new Date(selectedBill.createdAt).toLocaleString("vi-VN")}
+              </p>
+              <div className="space-y-2">
+                {selectedBill.items.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Chưa có món hoàn thành</p>
+                ) : (
+                  selectedBill.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between text-sm">
+                      <span>{item.name} x{item.quantity}</span>
+                      <span>{(item.quantity * item.price).toLocaleString("vi-VN")}₫</span>
+                    </div>
+                  ))
+                )}
+              </div>
+              <Separator />
+              <div className="flex justify-between font-bold text-lg">
+                <span>Tổng cộng</span>
+                <span className="text-primary">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={printBill} disabled={!selectedBill?.items.length}>
+              <FileText className="mr-2 h-4 w-4" /> Xuất bill PDF
+            </Button>
+            <Button onClick={handlePay} disabled={paying || !selectedBill?.items.length}>
+              {paying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <CreditCard className="mr-2 h-4 w-4" /> Xác nhận thanh toán
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
