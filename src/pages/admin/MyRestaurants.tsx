@@ -172,6 +172,29 @@ export default function MyRestaurants() {
           ))}
         </div>
       )}
+      {/* Edit Restaurant Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa nhà hàng</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Tên nhà hàng</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Địa chỉ</Label>
+              <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEdit} disabled={submitting || !editName.trim()}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

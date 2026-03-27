@@ -37,6 +37,7 @@ export default function StaffLayout() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </header>
       <main className="flex-1">
         <Outlet />
