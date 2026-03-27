@@ -69,6 +69,23 @@ export default function MyRestaurants() {
     }
   };
 
+  const handleEdit = async () => {
+    if (!editTarget || !editName.trim()) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("restaurants").update({
+      name: editName.trim(),
+      address: editAddress.trim() || null,
+    }).eq("id", editTarget.id);
+    setSubmitting(false);
+    if (error) {
+      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Đã cập nhật nhà hàng" });
+      setEditOpen(false);
+      fetchRestaurants();
+    }
+  };
+
   const handleDelete = async (r: Restaurant) => {
     if (!confirm(`Xóa nhà hàng "${r.name}"?`)) return;
     await supabase.from("restaurants").delete().eq("id", r.id);
