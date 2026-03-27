@@ -334,6 +334,7 @@ import MenuManagement from "@/components/restaurant/MenuManagement";
 import TableManagement from "@/components/restaurant/TableManagement";
 import OrdersView from "@/components/restaurant/OrdersView";
 import RevenueReport from "@/components/restaurant/RevenueReport";
+import BillPayment from "@/components/restaurant/BillPayment";
 import { ArrowLeft } from "lucide-react";
 
 function ImpersonateRestaurantDetail({ restaurantId, onBack }: { restaurantId: string; onBack: () => void }) {
