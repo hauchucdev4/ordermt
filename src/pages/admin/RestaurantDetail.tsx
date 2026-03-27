@@ -79,6 +79,7 @@ export default function RestaurantDetail() {
           <TabsTrigger value="menu">Thực đơn</TabsTrigger>
           <TabsTrigger value="tables">Bàn</TabsTrigger>
           <TabsTrigger value="orders">Order</TabsTrigger>
+          <TabsTrigger value="billing">Thanh toán</TabsTrigger>
           <TabsTrigger value="reports">Doanh thu</TabsTrigger>
         </TabsList>
 
@@ -93,6 +94,9 @@ export default function RestaurantDetail() {
         </TabsContent>
         <TabsContent value="orders" className="mt-4">
           <OrdersView restaurantId={restaurant.id} />
+        </TabsContent>
+        <TabsContent value="billing" className="mt-4">
+          <BillPayment restaurantId={restaurant.id} restaurantName={restaurant.name} />
         </TabsContent>
         <TabsContent value="reports" className="mt-4">
           <RevenueReport restaurantId={restaurant.id} />
