@@ -30,6 +30,11 @@ export default function MyRestaurants() {
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Restaurant | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+
   const fetchRestaurants = async () => {
     if (!user) return;
     setLoading(true);
