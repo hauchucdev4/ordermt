@@ -29,7 +29,6 @@ import ManagerReportsPage from "./pages/manager/ManagerReportsPage";
 import ManagerBillPage from "./pages/manager/ManagerBillPage";
 import ManagerMenuPage from "./pages/manager/ManagerMenuPage";
 import ManagerTablesPage from "./pages/manager/ManagerTablesPage";
-import ManagerBillPage from "./pages/manager/ManagerBillPage";
 
 // Staff
 import StaffLayout from "./pages/staff/StaffLayout";
