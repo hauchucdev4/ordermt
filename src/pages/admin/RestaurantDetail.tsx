@@ -13,6 +13,7 @@ import MenuManagement from "@/components/restaurant/MenuManagement";
 import TableManagement from "@/components/restaurant/TableManagement";
 import OrdersView from "@/components/restaurant/OrdersView";
 import RevenueReport from "@/components/restaurant/RevenueReport";
+import BillPayment from "@/components/restaurant/BillPayment";
 
 type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
 
@@ -78,6 +79,7 @@ export default function RestaurantDetail() {
           <TabsTrigger value="menu">Thực đơn</TabsTrigger>
           <TabsTrigger value="tables">Bàn</TabsTrigger>
           <TabsTrigger value="orders">Order</TabsTrigger>
+          <TabsTrigger value="billing">Thanh toán</TabsTrigger>
           <TabsTrigger value="reports">Doanh thu</TabsTrigger>
         </TabsList>
 
@@ -92,6 +94,9 @@ export default function RestaurantDetail() {
         </TabsContent>
         <TabsContent value="orders" className="mt-4">
           <OrdersView restaurantId={restaurant.id} />
+        </TabsContent>
+        <TabsContent value="billing" className="mt-4">
+          <BillPayment restaurantId={restaurant.id} restaurantName={restaurant.name} />
         </TabsContent>
         <TabsContent value="reports" className="mt-4">
           <RevenueReport restaurantId={restaurant.id} />

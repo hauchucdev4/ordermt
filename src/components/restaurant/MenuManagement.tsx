@@ -9,6 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Plus, Loader2, Trash2, Edit, UtensilsCrossed, ImageIcon, Upload } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -21,6 +24,7 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCat, setFilterCat] = useState("all");
+  const [customCategory, setCustomCategory] = useState(false);
 
   const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState<MenuItem | null>(null);
@@ -49,7 +53,7 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
 
   const openAdd = () => {
     setEditItem(null);
-    setName(""); setCategory("Khác"); setPrice(""); setImageUrl("");
+    setName(""); setCategory("Khác"); setPrice(""); setImageUrl(""); setCustomCategory(false);
     setOpen(true);
   };
 
@@ -171,10 +175,24 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
             </div>
             <div className="space-y-2">
               <Label>Danh mục</Label>
-              <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Món chính" list="category-list" />
-              <datalist id="category-list">
-                {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c} />)}
-              </datalist>
+              {!customCategory ? (
+                <div className="flex gap-2">
+                  <Select value={category} onValueChange={(v) => { if (v === "__custom__") { setCustomCategory(true); setCategory(""); } else setCategory(v); }}>
+                    <SelectTrigger className="flex-1"><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
+                    <SelectContent>
+                      {[...new Set([...DEFAULT_CATEGORIES, ...categories])].map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                      <SelectItem value="__custom__">+ Thêm danh mục mới</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Nhập tên danh mục..." className="flex-1" />
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setCustomCategory(false); if (!category.trim()) setCategory("Khác"); }}>Chọn từ DS</Button>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Giá (VNĐ)</Label>
