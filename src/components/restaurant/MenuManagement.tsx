@@ -29,6 +29,7 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const fetchItems = async () => {
     setLoading(true);
