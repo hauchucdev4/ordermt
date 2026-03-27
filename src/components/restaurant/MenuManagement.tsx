@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Loader2, Trash2, Edit, UtensilsCrossed, ImageIcon } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, UtensilsCrossed, ImageIcon, Upload } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
@@ -29,6 +29,7 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -180,8 +181,40 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
               <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="50000" />
             </div>
             <div className="space-y-2">
-              <Label>URL ảnh (tùy chọn)</Label>
-              <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
+              <Label>Ảnh món ăn (tùy chọn)</Label>
+              <div className="flex gap-2 items-center">
+                <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="URL ảnh hoặc tải lên..." className="flex-1" />
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploadingImage}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingImage(true);
+                      const ext = file.name.split(".").pop();
+                      const path = `${restaurantId}/${Date.now()}.${ext}`;
+                      const { error: uploadError } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+                      if (uploadError) {
+                        toast({ title: "Lỗi", description: uploadError.message, variant: "destructive" });
+                      } else {
+                        const { data: { publicUrl } } = supabase.storage.from("menu-images").getPublicUrl(path);
+                        setImageUrl(publicUrl);
+                        toast({ title: "Đã tải ảnh lên" });
+                      }
+                      setUploadingImage(false);
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="icon" disabled={uploadingImage} asChild>
+                    <span>{uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}</span>
+                  </Button>
+                </label>
+              </div>
+              {imageUrl && (
+                <img src={imageUrl} alt="Preview" className="h-20 w-20 object-cover rounded-md mt-1" />
+              )}
             </div>
           </div>
           <DialogFooter>

@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, UtensilsCrossed, LucideIcon } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface NavItem {
   title: string;
@@ -93,6 +94,8 @@ export default function DashboardLayout({ children, navItems, title }: Dashboard
               <SidebarTrigger />
               <h2 className="text-sm font-semibold text-foreground hidden sm:block">{title}</h2>
             </div>
+            <div className="flex items-center gap-1">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -119,6 +122,7 @@ export default function DashboardLayout({ children, navItems, title }: Dashboard
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </header>
           <main className="flex-1 p-4 md:p-6 overflow-auto">
             {children}

@@ -31,6 +31,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("*")
       .eq("id", userId)
       .single();
+    if (data) {
+      // Auto-lock check: if lock_until is set and has passed, lock the account
+      if (data.lock_until && new Date(data.lock_until) <= new Date() && data.status === "active") {
+        await supabase.from("profiles").update({ status: "locked" as const, lock_until: null }).eq("id", data.id);
+        data.status = "locked";
+        data.lock_until = null;
+      }
+    }
     setProfile(data);
   };
 

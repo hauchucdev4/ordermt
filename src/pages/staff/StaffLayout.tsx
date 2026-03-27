@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link, Outlet } from "react-router-dom";
 import { Settings, LogOut, UtensilsCrossed } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function StaffLayout() {
   const { profile, signOut } = useAuth();
@@ -17,6 +18,8 @@ export default function StaffLayout() {
           <span className="font-bold text-foreground">OrderMaster</span>
           <span className="text-xs text-muted-foreground">Staff</span>
         </div>
+        <div className="flex items-center gap-1">
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-9 w-9 rounded-full">
@@ -34,6 +37,7 @@ export default function StaffLayout() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </header>
       <main className="flex-1">
         <Outlet />

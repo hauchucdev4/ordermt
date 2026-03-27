@@ -30,6 +30,11 @@ export default function MyRestaurants() {
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Restaurant | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+
   const fetchRestaurants = async () => {
     if (!user) return;
     setLoading(true);
@@ -60,6 +65,23 @@ export default function MyRestaurants() {
       setOpen(false);
       setName("");
       setAddress("");
+      fetchRestaurants();
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!editTarget || !editName.trim()) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("restaurants").update({
+      name: editName.trim(),
+      address: editAddress.trim() || null,
+    }).eq("id", editTarget.id);
+    setSubmitting(false);
+    if (error) {
+      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Đã cập nhật nhà hàng" });
+      setEditOpen(false);
       fetchRestaurants();
     }
   };
@@ -139,6 +161,9 @@ export default function MyRestaurants() {
                 </CardContent>
               </Link>
               <div className="px-6 pb-4 flex gap-2">
+                <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); setEditTarget(r); setEditName(r.name); setEditAddress(r.address || ""); setEditOpen(true); }}>
+                  <Edit className="h-4 w-4" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); handleDelete(r); }}>
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
@@ -147,6 +172,29 @@ export default function MyRestaurants() {
           ))}
         </div>
       )}
+      {/* Edit Restaurant Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa nhà hàng</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Tên nhà hàng</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Địa chỉ</Label>
+              <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEdit} disabled={submitting || !editName.trim()}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
