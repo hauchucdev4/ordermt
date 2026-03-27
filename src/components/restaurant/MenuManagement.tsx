@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Loader2, Trash2, Edit, UtensilsCrossed, ImageIcon } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, UtensilsCrossed, ImageIcon, Upload } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
