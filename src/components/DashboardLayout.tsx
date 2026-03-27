@@ -94,6 +94,8 @@ export default function DashboardLayout({ children, navItems, title }: Dashboard
               <SidebarTrigger />
               <h2 className="text-sm font-semibold text-foreground hidden sm:block">{title}</h2>
             </div>
+            <div className="flex items-center gap-1">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
