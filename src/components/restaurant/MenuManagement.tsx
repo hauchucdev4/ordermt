@@ -53,7 +53,7 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
 
   const openAdd = () => {
     setEditItem(null);
-    setName(""); setCategory("Khác"); setPrice(""); setImageUrl("");
+    setName(""); setCategory("Khác"); setPrice(""); setImageUrl(""); setCustomCategory(false);
     setOpen(true);
   };
 
