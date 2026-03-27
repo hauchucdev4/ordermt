@@ -161,6 +161,9 @@ export default function MyRestaurants() {
                 </CardContent>
               </Link>
               <div className="px-6 pb-4 flex gap-2">
+                <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); setEditTarget(r); setEditName(r.name); setEditAddress(r.address || ""); setEditOpen(true); }}>
+                  <Edit className="h-4 w-4" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); handleDelete(r); }}>
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
