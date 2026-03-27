@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, UtensilsCrossed, LucideIcon } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface NavItem {
   title: string;
