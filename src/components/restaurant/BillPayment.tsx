@@ -65,8 +65,7 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
     const { data: orderItems } = await supabase
       .from("order_items")
       .select("*, menu_items(name, price)")
-      .eq("order_id", order.id)
-      .eq("status", "done");
+      .eq("order_id", order.id);
 
     const items: BillItem[] = (orderItems || []).map((oi: any) => ({
       name: oi.menu_items?.name || "?",
