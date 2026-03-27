@@ -24,6 +24,7 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCat, setFilterCat] = useState("all");
+  const [customCategory, setCustomCategory] = useState(false);
 
   const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState<MenuItem | null>(null);
