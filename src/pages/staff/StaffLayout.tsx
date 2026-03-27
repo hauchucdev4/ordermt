@@ -18,6 +18,8 @@ export default function StaffLayout() {
           <span className="font-bold text-foreground">OrderMaster</span>
           <span className="text-xs text-muted-foreground">Staff</span>
         </div>
+        <div className="flex items-center gap-1">
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-9 w-9 rounded-full">
