@@ -73,6 +73,8 @@ const App = () => (
               <Route index element={<StaffOrderPage />} />
               <Route path="kitchen" element={<ChefKitchenPage />} />
               <Route path="billing" element={<ManagerBillPage />} />
+              <Route path="menu" element={<ManagerMenuPage />} />
+              <Route path="tables" element={<ManagerTablesPage />} />
               <Route path="staff" element={<ManagerStaffPage />} />
               <Route path="reports" element={<ManagerReportsPage />} />
               <Route path="settings" element={<AccountSettings />} />
