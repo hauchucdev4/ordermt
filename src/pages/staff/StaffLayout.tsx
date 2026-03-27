@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link, Outlet } from "react-router-dom";
 import { Settings, LogOut, UtensilsCrossed } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function StaffLayout() {
   const { profile, signOut } = useAuth();
