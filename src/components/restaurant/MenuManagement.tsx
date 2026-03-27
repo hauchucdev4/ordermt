@@ -175,10 +175,24 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
             </div>
             <div className="space-y-2">
               <Label>Danh mục</Label>
-              <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Món chính" list="category-list" />
-              <datalist id="category-list">
-                {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c} />)}
-              </datalist>
+              {!customCategory ? (
+                <div className="flex gap-2">
+                  <Select value={category} onValueChange={(v) => { if (v === "__custom__") { setCustomCategory(true); setCategory(""); } else setCategory(v); }}>
+                    <SelectTrigger className="flex-1"><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
+                    <SelectContent>
+                      {[...new Set([...DEFAULT_CATEGORIES, ...categories])].map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                      <SelectItem value="__custom__">+ Thêm danh mục mới</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Nhập tên danh mục..." className="flex-1" />
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setCustomCategory(false); if (!category.trim()) setCategory("Khác"); }}>Chọn từ DS</Button>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Giá (VNĐ)</Label>
