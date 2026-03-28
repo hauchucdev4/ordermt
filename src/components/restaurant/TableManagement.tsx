@@ -37,7 +37,14 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
     setLoading(false);
   };
 
-  useEffect(() => { fetchTables(); }, [restaurantId]);
+  useEffect(() => {
+    fetchTables();
+    const channel = supabase
+      .channel(`table-mgmt-${restaurantId}-${Date.now()}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tables", filter: `restaurant_id=eq.${restaurantId}` }, () => fetchTables())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [restaurantId]);
 
   const handleAdd = async () => {
     if (!name.trim()) return;
