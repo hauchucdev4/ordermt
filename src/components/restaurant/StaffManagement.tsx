@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -16,7 +16,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Plus, Loader2, Trash2, Edit, KeyRound, Users } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, KeyRound, Users, Lock, Unlock, FileSpreadsheet } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -60,6 +60,12 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
   const [resetTarget, setResetTarget] = useState<Profile | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Lock/unlock
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const [unlockTarget, setUnlockTarget] = useState<Profile | null>(null);
+  const [unlockType, setUnlockType] = useState<"permanent" | "timed">("permanent");
+  const [unlockDate, setUnlockDate] = useState("");
 
   const fetchStaff = async () => {
     setLoading(true);
@@ -126,11 +132,49 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
     }
   };
 
+  const handleLock = async (p: Profile) => {
+    if (!confirm(`Khóa tài khoản "${p.full_name}"?`)) return;
+    setSubmitting(true);
+    await supabase.from("profiles").update({ status: "locked" as const, lock_until: null }).eq("id", p.id);
+    toast({ title: `Đã khóa ${p.full_name}` });
+    setSubmitting(false);
+    fetchStaff();
+  };
+
+  const handleUnlock = async () => {
+    if (!unlockTarget) return;
+    setSubmitting(true);
+    const update: { status: "active"; lock_until: string | null } = {
+      status: "active",
+      lock_until: unlockType === "timed" && unlockDate ? new Date(unlockDate).toISOString() : null,
+    };
+    await supabase.from("profiles").update(update).eq("id", unlockTarget.id);
+    toast({ title: `Đã mở khóa ${unlockTarget.full_name}` });
+    setSubmitting(false);
+    setUnlockOpen(false);
+    fetchStaff();
+  };
+
   const handleDelete = async (p: Profile) => {
     if (!confirm(`Xóa nhân viên "${p.full_name}"?`)) return;
     await supabase.from("profiles").delete().eq("id", p.id);
     toast({ title: "Đã xóa nhân viên" });
     fetchStaff();
+  };
+
+  const exportExcel = async () => {
+    const XLSX = await import("xlsx");
+    const wb = XLSX.utils.book_new();
+    const data = filtered.map(p => ({
+      "Họ tên": p.full_name || "",
+      "Email": p.email,
+      "Vai trò": roleLabel(p.role),
+      "Trạng thái": p.status === "active" ? "Hoạt động" : p.status === "locked" ? "Đã khóa" : "Chờ duyệt",
+      "Ngày tạo": new Date(p.created_at).toLocaleDateString("vi-VN"),
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Nhân viên");
+    XLSX.writeFile(wb, `nhan-vien-${Date.now()}.xlsx`);
   };
 
   const filtered = filterRole === "all" ? staff : staff.filter((s) => s.role === filterRole);
@@ -149,15 +193,20 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <Select value={filterRole} onValueChange={setFilterRole}>
-          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
-            {STAFF_ROLES.map((r) => (
-              <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 items-center flex-wrap">
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              {STAFF_ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={exportExcel}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> Xuất Excel
+          </Button>
+        </div>
 
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
@@ -225,19 +274,33 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
                   <TableCell>{p.email}</TableCell>
                   <TableCell><Badge variant={roleBadgeVariant(p.role)}>{roleLabel(p.role)}</Badge></TableCell>
                   <TableCell>
-                    <Badge variant={p.status === "active" ? "default" : "secondary"}>
+                    <Badge variant={p.status === "active" ? "default" : p.status === "locked" ? "destructive" : "secondary"}>
                       {p.status === "active" ? "Hoạt động" : p.status === "locked" ? "Đã khóa" : "Chờ duyệt"}
                     </Badge>
+                    {p.lock_until && p.status === "active" && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Hết hạn: {new Date(p.lock_until).toLocaleDateString("vi-VN")}
+                      </p>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => { setEditTarget(p); setEditName(p.full_name || ""); setEditEmail(p.email); setEditOpen(true); }}>
+                      <Button variant="ghost" size="icon" title="Sửa" onClick={() => { setEditTarget(p); setEditName(p.full_name || ""); setEditEmail(p.email); setEditOpen(true); }}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => { setResetTarget(p); setResetOpen(true); }}>
+                      <Button variant="ghost" size="icon" title="Đặt lại mật khẩu" onClick={() => { setResetTarget(p); setResetOpen(true); setNewPassword(""); setConfirmPassword(""); }}>
                         <KeyRound className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(p)}>
+                      {p.status === "locked" ? (
+                        <Button variant="ghost" size="icon" title="Mở khóa" onClick={() => { setUnlockTarget(p); setUnlockType("permanent"); setUnlockDate(""); setUnlockOpen(true); }}>
+                          <Unlock className="h-4 w-4 text-green-600" />
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="icon" title="Khóa" onClick={() => handleLock(p)} disabled={submitting}>
+                          <Lock className="h-4 w-4 text-orange-600" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" title="Xóa" onClick={() => handleDelete(p)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -249,6 +312,7 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
         </div>
       )}
 
+      {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Chỉnh sửa thông tin</DialogTitle></DialogHeader>
@@ -270,6 +334,7 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
         </DialogContent>
       </Dialog>
 
+      {/* Reset Password Dialog */}
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Đặt lại mật khẩu cho {resetTarget?.full_name}</DialogTitle></DialogHeader>
@@ -289,6 +354,33 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
           <DialogFooter>
             <Button onClick={handleResetPassword} disabled={submitting || newPassword.length < 8 || newPassword !== confirmPassword}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Đặt lại
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unlock Dialog */}
+      <Dialog open={unlockOpen} onOpenChange={setUnlockOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mở khóa {unlockTarget?.full_name}</DialogTitle>
+            <DialogDescription>Chọn kiểu mở khóa</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button variant={unlockType === "permanent" ? "default" : "outline"} onClick={() => setUnlockType("permanent")} size="sm">Mở khóa vĩnh viễn</Button>
+              <Button variant={unlockType === "timed" ? "default" : "outline"} onClick={() => setUnlockType("timed")} size="sm">Đặt thời hạn</Button>
+            </div>
+            {unlockType === "timed" && (
+              <div className="space-y-2">
+                <Label>Tài khoản sẽ tự khóa lại vào</Label>
+                <Input type="datetime-local" value={unlockDate} onChange={(e) => setUnlockDate(e.target.value)} />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleUnlock} disabled={submitting}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Xác nhận
             </Button>
           </DialogFooter>
         </DialogContent>
