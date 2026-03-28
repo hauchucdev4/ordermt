@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
@@ -13,19 +13,8 @@ import type { Database } from "@/integrations/supabase/types";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 
-interface BillItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface TableBill {
-  table: TableRow;
-  orderId: string;
-  items: BillItem[];
-  total: number;
-  createdAt: string;
-}
+interface BillItem { name: string; quantity: number; price: number; }
+interface TableBill { table: TableRow; orderId: string; items: BillItem[]; total: number; createdAt: string; }
 
 export default function BillPayment({ restaurantId, restaurantName }: { restaurantId: string; restaurantName?: string }) {
   const { toast } = useToast();
@@ -33,28 +22,46 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
   const [loading, setLoading] = useState(true);
   const [selectedBill, setSelectedBill] = useState<TableBill | null>(null);
   const [paying, setPaying] = useState(false);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  const fetchOccupiedTables = async () => {
+  const fetchOccupiedTables = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
-      .from("tables")
-      .select("*")
-      .eq("restaurant_id", restaurantId)
-      .eq("status", "occupied")
-      .order("name");
+      .from("tables").select("*").eq("restaurant_id", restaurantId).eq("status", "occupied").order("name");
     setTables(data || []);
     setLoading(false);
-  };
+  }, [restaurantId]);
 
-  useEffect(() => { fetchOccupiedTables(); }, [restaurantId]);
+  // Realtime with auto-reconnect
+  useEffect(() => {
+    fetchOccupiedTables();
+
+    const setupChannel = () => {
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+      const channel = supabase
+        .channel(`billing-${restaurantId}-${Date.now()}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "tables", filter: `restaurant_id=eq.${restaurantId}` }, () => fetchOccupiedTables())
+        .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `restaurant_id=eq.${restaurantId}` }, () => fetchOccupiedTables())
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR") setTimeout(setupChannel, 3000);
+        });
+      channelRef.current = channel;
+    };
+    setupChannel();
+
+    const heartbeat = setInterval(() => {
+      if (channelRef.current) { supabase.removeChannel(channelRef.current); setupChannel(); }
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(heartbeat);
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+    };
+  }, [restaurantId]);
 
   const viewBill = async (table: TableRow) => {
     const { data: orders } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("table_id", table.id)
-      .eq("status", "open")
-      .limit(1);
+      .from("orders").select("*").eq("table_id", table.id).eq("status", "open").limit(1);
 
     if (!orders || orders.length === 0) {
       toast({ title: "Không có order", description: "Bàn này chưa có order nào", variant: "destructive" });
@@ -63,38 +70,25 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
 
     const order = orders[0];
     const { data: orderItems } = await supabase
-      .from("order_items")
-      .select("*, menu_items(name, price)")
-      .eq("order_id", order.id);
+      .from("order_items").select("*, menu_items(name, price)").eq("order_id", order.id);
 
     const items: BillItem[] = (orderItems || []).map((oi: any) => ({
-      name: oi.menu_items?.name || "?",
-      quantity: oi.quantity,
-      price: Number(oi.menu_items?.price || 0),
+      name: oi.menu_items?.name || "?", quantity: oi.quantity, price: Number(oi.menu_items?.price || 0),
     }));
-
     const total = items.reduce((s, i) => s + i.quantity * i.price, 0);
 
-    setSelectedBill({
-      table,
-      orderId: order.id,
-      items,
-      total,
-      createdAt: order.created_at,
-    });
+    setSelectedBill({ table, orderId: order.id, items, total, createdAt: order.created_at });
   };
 
   const handlePay = async () => {
     if (!selectedBill) return;
     setPaying(true);
 
-    await supabase
-      .from("orders")
+    await supabase.from("orders")
       .update({ status: "paid" as const, total: selectedBill.total, paid_at: new Date().toISOString() })
       .eq("id", selectedBill.orderId);
 
-    await supabase
-      .from("tables")
+    await supabase.from("tables")
       .update({ status: "empty" as const })
       .eq("id", selectedBill.table.id);
 
@@ -110,29 +104,19 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
       import("jspdf-autotable").then(({ default: autoTable }) => {
         const doc = new jsPDF({ unit: "mm", format: [80, 200] });
         const w = 80;
-
         doc.setFontSize(12);
         doc.text(restaurantName || "Nhà hàng", w / 2, 10, { align: "center" });
         doc.setFontSize(8);
         doc.text(`${selectedBill.table.name}`, w / 2, 16, { align: "center" });
         doc.text(new Date().toLocaleString("vi-VN"), w / 2, 20, { align: "center" });
-
         doc.setLineWidth(0.3);
         doc.line(5, 23, w - 5, 23);
 
         autoTable(doc, {
-          startY: 26,
-          margin: { left: 5, right: 5 },
+          startY: 26, margin: { left: 5, right: 5 },
           head: [["Món", "SL", "Giá", "T.Tiền"]],
-          body: selectedBill.items.map(i => [
-            i.name,
-            i.quantity.toString(),
-            i.price.toLocaleString("vi-VN"),
-            (i.quantity * i.price).toLocaleString("vi-VN"),
-          ]),
-          styles: { fontSize: 7, cellPadding: 1 },
-          headStyles: { fillColor: [50, 50, 50] },
-          theme: "grid",
+          body: selectedBill.items.map(i => [i.name, i.quantity.toString(), i.price.toLocaleString("vi-VN"), (i.quantity * i.price).toLocaleString("vi-VN")]),
+          styles: { fontSize: 7, cellPadding: 1 }, headStyles: { fillColor: [50, 50, 50] }, theme: "grid",
         });
 
         const finalY = (doc as any).lastAutoTable?.finalY || 60;
@@ -141,7 +125,6 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
         doc.setFontSize(8);
         doc.text("ĐÃ THANH TOÁN", w / 2, finalY + 12, { align: "center" });
         doc.text("Cảm ơn quý khách!", w / 2, finalY + 17, { align: "center" });
-
         doc.save(`bill-${selectedBill.table.name}-${Date.now()}.pdf`);
       });
     });
@@ -166,7 +149,7 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
             <Card key={t.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => viewBill(t)}>
               <CardContent className="p-4 text-center">
                 <p className="font-bold text-lg">{t.name}</p>
-                <Badge className="bg-accent text-accent-foreground mt-1">Có khách</Badge>
+                <Badge className="bg-orange-500/20 text-orange-700 dark:text-orange-300 mt-1">Có khách</Badge>
                 <p className="text-xs text-muted-foreground mt-2">Nhấn để thanh toán</p>
               </CardContent>
             </Card>
@@ -183,12 +166,10 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
           </DialogHeader>
           {selectedBill && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {new Date(selectedBill.createdAt).toLocaleString("vi-VN")}
-              </p>
+              <p className="text-sm text-muted-foreground">{new Date(selectedBill.createdAt).toLocaleString("vi-VN")}</p>
               <div className="space-y-2">
                 {selectedBill.items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Chưa có món hoàn thành</p>
+                  <p className="text-sm text-muted-foreground">Chưa có món nào</p>
                 ) : (
                   selectedBill.items.map((item, idx) => (
                     <div key={idx} className="flex justify-between text-sm">

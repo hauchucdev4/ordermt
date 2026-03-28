@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChefHat } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
@@ -19,6 +19,7 @@ export default function ChefKitchenPage() {
   const [items, setItems] = useState<KitchenItem[]>([]);
   const [loading, setLoading] = useState(true);
   const audioRef = useRef<AudioContext | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const playSound = () => {
     try {
@@ -37,7 +38,7 @@ export default function ChefKitchenPage() {
     } catch {}
   };
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     if (!profile?.restaurant_id) return;
     const { data } = await supabase
       .from("order_items")
@@ -47,29 +48,40 @@ export default function ChefKitchenPage() {
       .order("created_at", { ascending: true });
 
     if (data) {
-      const mapped = data.map((item: any) => ({
+      setItems(data.map((item: any) => ({
         ...item,
         menu_item_name: item.menu_items?.name || "",
         table_name: item.orders?.tables?.name || "",
-      }));
-      setItems(mapped);
+      })));
     }
     setLoading(false);
-  };
+  }, [profile?.restaurant_id]);
 
   useEffect(() => {
     fetchItems();
-
     if (!profile?.restaurant_id) return;
-    const channel = supabase
-      .channel("kitchen-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => {
-        playSound();
-        fetchItems();
-      })
-      .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    const setupChannel = () => {
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+      const channel = supabase
+        .channel(`kitchen-realtime-${profile.restaurant_id}-${Date.now()}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => { playSound(); fetchItems(); })
+        .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchItems())
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR") setTimeout(setupChannel, 3000);
+        });
+      channelRef.current = channel;
+    };
+    setupChannel();
+
+    const heartbeat = setInterval(() => {
+      if (channelRef.current) { supabase.removeChannel(channelRef.current); setupChannel(); }
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(heartbeat);
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+    };
   }, [profile?.restaurant_id]);
 
   const updateStatus = async (itemId: string, newStatus: "preparing" | "done") => {
@@ -81,9 +93,7 @@ export default function ChefKitchenPage() {
   const preparingItems = items.filter(i => i.status === "preparing");
   const doneItems = items.filter(i => i.status === "done");
 
-  if (loading) {
-    return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
-  }
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
   const Column = ({ title, emoji, items: colItems, action }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void }) => (
     <div className="flex-1 min-w-[280px]">
@@ -100,9 +110,7 @@ export default function ChefKitchenPage() {
                   <p className="font-semibold">{item.menu_item_name}</p>
                   <p className="text-sm text-muted-foreground">{item.table_name} • x{item.quantity}</p>
                   {item.note && <p className="text-xs text-muted-foreground italic mt-1">{item.note}</p>}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(item.created_at).toLocaleTimeString("vi-VN")}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{new Date(item.created_at).toLocaleTimeString("vi-VN")}</p>
                 </div>
                 {action && (
                   <Button size="sm" onClick={() => action(item)}>
@@ -113,9 +121,7 @@ export default function ChefKitchenPage() {
             </CardContent>
           </Card>
         ))}
-        {colItems.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-8">Trống</p>
-        )}
+        {colItems.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Trống</p>}
       </div>
     </div>
   );
