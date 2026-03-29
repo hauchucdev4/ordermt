@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -94,7 +94,6 @@ export default function StaffOrderPage() {
     }
   }, []);
 
-  // Setup realtime with auto-reconnect
   useEffect(() => {
     fetchData();
     if (!profile?.restaurant_id) return;
@@ -116,23 +115,16 @@ export default function StaffOrderPage() {
           fetchTables();
         })
         .subscribe((status) => {
-          if (status === "CHANNEL_ERROR") {
-            setTimeout(setupChannel, 3000);
-          }
+          if (status === "CHANNEL_ERROR") setTimeout(setupChannel, 3000);
         });
 
       channelRef.current = channel;
     };
 
     setupChannel();
-
-    // Heartbeat to keep connection alive
     const heartbeat = setInterval(() => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        setupChannel();
-      }
-    }, 5 * 60 * 1000); // reconnect every 5 min
+      if (channelRef.current) { supabase.removeChannel(channelRef.current); setupChannel(); }
+    }, 5 * 60 * 1000);
 
     return () => {
       clearInterval(heartbeat);
@@ -140,7 +132,6 @@ export default function StaffOrderPage() {
     };
   }, [profile?.restaurant_id, selectedTable?.id]);
 
-  // Reload order items when selecting table
   useEffect(() => {
     if (selectedTable) loadTableOrder(selectedTable);
   }, [selectedTable?.id]);
@@ -206,6 +197,50 @@ export default function StaffOrderPage() {
     }
   };
 
+  const orderTotal = orderItems.reduce((sum, i) => sum + (i.quantity * (i.menu_items?.price || 0)), 0);
+
+  const handlePay = async () => {
+    if (!orderId || !selectedTable) return;
+    setPaying(true);
+    await supabase.from("orders").update({ status: "paid" as const, total: orderTotal, paid_at: new Date().toISOString() }).eq("id", orderId);
+    await supabase.from("tables").update({ status: "empty" as const }).eq("id", selectedTable.id);
+    toast({ title: "Thanh toán thành công", description: `${selectedTable.name} - ${orderTotal.toLocaleString("vi-VN")}₫` });
+    setPaying(false);
+    setSelectedTable(null);
+    fetchTables();
+  };
+
+  const printBill = () => {
+    if (!selectedTable || orderItems.length === 0) return;
+    import("jspdf").then(({ default: jsPDF }) => {
+      import("jspdf-autotable").then(({ default: autoTable }) => {
+        const doc = new jsPDF({ unit: "mm", format: [80, 200] });
+        const w = 80;
+        doc.setFontSize(12);
+        doc.text(restaurantName || "Nhà hàng", w / 2, 10, { align: "center" });
+        doc.setFontSize(8);
+        doc.text(selectedTable.name, w / 2, 16, { align: "center" });
+        doc.text(new Date().toLocaleString("vi-VN"), w / 2, 20, { align: "center" });
+        doc.line(5, 23, w - 5, 23);
+        const billItems = orderItems.map(i => ({
+          name: i.menu_items?.name || "?", quantity: i.quantity, price: Number(i.menu_items?.price || 0),
+        }));
+        autoTable(doc, {
+          startY: 26, margin: { left: 5, right: 5 },
+          head: [["Món", "SL", "Giá", "T.Tiền"]],
+          body: billItems.map(i => [i.name, i.quantity.toString(), i.price.toLocaleString("vi-VN"), (i.quantity * i.price).toLocaleString("vi-VN")]),
+          styles: { fontSize: 7, cellPadding: 1 }, headStyles: { fillColor: [50, 50, 50] }, theme: "grid",
+        });
+        const finalY = (doc as any).lastAutoTable?.finalY || 60;
+        doc.setFontSize(10);
+        doc.text(`TỔNG: ${orderTotal.toLocaleString("vi-VN")}₫`, w / 2, finalY + 6, { align: "center" });
+        doc.setFontSize(8);
+        doc.text("Cảm ơn quý khách!", w / 2, finalY + 12, { align: "center" });
+        doc.save(`bill-${selectedTable.name}-${Date.now()}.pdf`);
+      });
+    });
+  };
+
   const statusLabel: Record<string, { label: string; color: string }> = {
     new: { label: "Mới", color: "bg-accent text-accent-foreground" },
     preparing: { label: "Đang làm", color: "bg-orange-500/20 text-orange-700 dark:text-orange-300" },
@@ -237,102 +272,108 @@ export default function StaffOrderPage() {
         )}
       </div>
 
-      {/* Center Dialog instead of Sheet */}
       <Dialog open={!!selectedTable} onOpenChange={(open) => !open && setSelectedTable(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle>{selectedTable?.name} - Đặt món</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6">
-            {/* Menu */}
-            {categories.map(cat => (
-              <div key={cat}>
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-2">{cat}</h3>
-                <div className="space-y-2">
-                  {menuItems.filter(m => m.category === cat).map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border">
-                      <div className="flex items-center gap-3">
-                        {item.image_url && (
-                          <img src={item.image_url} alt={item.name} className="h-10 w-10 rounded object-cover" />
-                        )}
-                        <div>
-                          <p className="font-medium text-sm">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">{item.price.toLocaleString("vi-VN")}đ</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, -1)}>
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-6 text-center text-sm font-medium">{cart[item.id] || 0}</span>
-                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, 1)}>
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {Object.keys(cart).length > 0 && (
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-2">Ghi chú</h3>
-                {Object.entries(cart).map(([menuId, qty]) => {
-                  const item = menuItems.find(m => m.id === menuId);
-                  return (
-                    <div key={menuId} className="mb-2">
-                      <p className="text-sm">{item?.name} x{qty}</p>
-                      <Input
-                        placeholder="Ghi chú..."
-                        value={notes[menuId] || ""}
-                        onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))}
-                        className="mt-1 h-8 text-xs"
-                      />
-                    </div>
-                  );
-                })}
-                <Button className="w-full mt-3" onClick={submitOrder}>
-                  <Send className="mr-2 h-4 w-4" /> Đặt món
-                </Button>
-              </div>
-            )}
-
-            {/* Current orders */}
-            {orderItems.length > 0 && (
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Order hiện tại</h3>
-                {(["new", "preparing", "done"] as const).map(status => {
-                  const group = orderItems.filter(i => i.status === status);
-                  if (group.length === 0) return null;
-                  const info = statusLabel[status];
-                  return (
-                    <div key={status} className="mb-3">
-                      <Badge className={`${info.color} mb-2`}>{info.label}</Badge>
-                      {group.map(item => (
-                        <div key={item.id} className="flex items-center justify-between py-1 text-sm">
+          <div className="flex flex-col md:flex-row md:divide-x divide-border overflow-hidden" style={{ maxHeight: "calc(90vh - 80px)" }}>
+            {/* LEFT: Menu */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Thực đơn</h3>
+              {categories.map(cat => (
+                <div key={cat}>
+                  <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
+                  <div className="space-y-1.5">
+                    {menuItems.filter(m => m.category === cat).map(item => (
+                      <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border">
+                        <div className="flex items-center gap-2">
+                          {item.image_url && <img src={item.image_url} alt={item.name} className="h-9 w-9 rounded object-cover" />}
                           <div>
-                            <span>{item.menu_items?.name}</span>
-                            <span className="text-muted-foreground"> x{item.quantity}</span>
-                            {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+                            <p className="font-medium text-sm">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">{item.price.toLocaleString("vi-VN")}đ</p>
                           </div>
-                          {(status === "new" || canDeleteAll) ? (
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteItem(item)}>
-                              <Trash2 className="h-3 w-3 text-destructive" />
-                            </Button>
-                          ) : (
-                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-30 cursor-not-allowed" disabled title="Chỉ quản lý/admin mới xóa được">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          )}
                         </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, -1)}><Minus className="h-3 w-3" /></Button>
+                          <span className="w-6 text-center text-sm font-medium">{cart[item.id] || 0}</span>
+                          <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, 1)}><Plus className="h-3 w-3" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {Object.keys(cart).length > 0 && (
+                <div className="border-t pt-3 space-y-2">
+                  <h4 className="font-semibold text-sm">Ghi chú món mới</h4>
+                  {Object.entries(cart).map(([menuId, qty]) => {
+                    const item = menuItems.find(m => m.id === menuId);
+                    return (
+                      <div key={menuId}>
+                        <p className="text-sm">{item?.name} x{qty}</p>
+                        <Input placeholder="Ghi chú..." value={notes[menuId] || ""} onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))} className="mt-1 h-8 text-xs" />
+                      </div>
+                    );
+                  })}
+                  <Button className="w-full" onClick={submitOrder}><Send className="mr-2 h-4 w-4" /> Đặt món</Button>
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT: Current order + payment */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 border-t md:border-t-0">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Order hiện tại</h3>
+              {orderItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">Chưa có món nào</p>
+              ) : (
+                <>
+                  {(["new", "preparing", "done"] as const).map(status => {
+                    const group = orderItems.filter(i => i.status === status);
+                    if (group.length === 0) return null;
+                    const info = statusLabel[status];
+                    return (
+                      <div key={status} className="mb-2">
+                        <Badge className={`${info.color} mb-1`}>{info.label}</Badge>
+                        {group.map(item => (
+                          <div key={item.id} className="flex items-center justify-between py-1 text-sm">
+                            <div className="flex-1 min-w-0">
+                              <span>{item.menu_items?.name}</span>
+                              <span className="text-muted-foreground"> x{item.quantity}</span>
+                              <span className="text-muted-foreground ml-2">{((item.menu_items?.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</span>
+                              {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+                            </div>
+                            {(status === "new" || canDeleteAll) ? (
+                              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                            ) : (
+                              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-30 cursor-not-allowed" disabled><Trash2 className="h-3 w-3" /></Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+
+                  <Separator />
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Tổng cộng</span>
+                    <span className="text-primary">{orderTotal.toLocaleString("vi-VN")}₫</span>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" className="flex-1" onClick={printBill}>
+                      <FileText className="mr-2 h-4 w-4" /> Xuất bill
+                    </Button>
+                    <Button className="flex-1" onClick={handlePay} disabled={paying}>
+                      {paying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
