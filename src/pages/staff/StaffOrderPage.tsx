@@ -68,10 +68,16 @@ export default function StaffOrderPage() {
     setMenuItems(data || []);
   }, [profile?.restaurant_id]);
 
+  const fetchRestaurantName = useCallback(async () => {
+    if (!profile?.restaurant_id) return;
+    const { data } = await supabase.from("restaurants").select("name").eq("id", profile.restaurant_id).single();
+    if (data) setRestaurantName(data.name);
+  }, [profile?.restaurant_id]);
+
   const fetchData = useCallback(async () => {
-    await Promise.all([fetchTables(), fetchMenu()]);
+    await Promise.all([fetchTables(), fetchMenu(), fetchRestaurantName()]);
     setLoading(false);
-  }, [fetchTables, fetchMenu]);
+  }, [fetchTables, fetchMenu, fetchRestaurantName]);
 
   const loadTableOrder = useCallback(async (table: TableRow) => {
     const { data: orders } = await supabase
