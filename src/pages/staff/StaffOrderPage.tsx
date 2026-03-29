@@ -32,6 +32,8 @@ export default function StaffOrderPage() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [paying, setPaying] = useState(false);
+  const [restaurantName, setRestaurantName] = useState("");
   const audioRef = useRef<AudioContext | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
