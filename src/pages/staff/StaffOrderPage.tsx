@@ -279,46 +279,49 @@ export default function StaffOrderPage() {
           </DialogHeader>
 
           <div className="flex flex-col md:flex-row md:divide-x divide-border overflow-hidden" style={{ maxHeight: "calc(90vh - 80px)" }}>
-            {/* LEFT: Menu */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
-              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Thực đơn</h3>
-              {categories.map(cat => (
-                <div key={cat}>
-                  <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
-                  <div className="space-y-1.5">
-                    {menuItems.filter(m => m.category === cat).map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border">
-                        <div className="flex items-center gap-2">
-                          {item.image_url && <img src={item.image_url} alt={item.name} className="h-9 w-9 rounded object-cover" />}
-                          <div>
-                            <p className="font-medium text-sm">{item.name}</p>
-                            <p className="text-xs text-muted-foreground">{item.price.toLocaleString("vi-VN")}đ</p>
+            {/* LEFT: Menu + sticky cart */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Thực đơn</h3>
+                {categories.map(cat => (
+                  <div key={cat}>
+                    <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
+                    <div className="space-y-1.5">
+                      {menuItems.filter(m => m.category === cat).map(item => (
+                        <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border">
+                          <div className="flex items-center gap-2">
+                            {item.image_url && <img src={item.image_url} alt={item.name} className="h-9 w-9 rounded object-cover" />}
+                            <div>
+                              <p className="font-medium text-sm">{item.name}</p>
+                              <p className="text-xs text-muted-foreground">{item.price.toLocaleString("vi-VN")}đ</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, -1)}><Minus className="h-3 w-3" /></Button>
+                            <span className={`w-6 text-center text-sm font-bold ${cart[item.id] ? "text-primary" : "text-muted-foreground"}`}>{cart[item.id] || 0}</span>
+                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, 1)}><Plus className="h-3 w-3" /></Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, -1)}><Minus className="h-3 w-3" /></Button>
-                          <span className="w-6 text-center text-sm font-medium">{cart[item.id] || 0}</span>
-                          <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, 1)}><Plus className="h-3 w-3" /></Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
+              {/* Sticky bottom cart */}
               {Object.keys(cart).length > 0 && (
-                <div className="border-t pt-3 space-y-2">
-                  <h4 className="font-semibold text-sm">Ghi chú món mới</h4>
+                <div className="border-t bg-muted/50 p-4 space-y-2 shrink-0 max-h-[40%] overflow-y-auto">
+                  <h4 className="font-semibold text-sm">Ghi chú món mới ({Object.values(cart).reduce((a, b) => a + b, 0)} món)</h4>
                   {Object.entries(cart).map(([menuId, qty]) => {
                     const item = menuItems.find(m => m.id === menuId);
                     return (
-                      <div key={menuId}>
-                        <p className="text-sm">{item?.name} x{qty}</p>
-                        <Input placeholder="Ghi chú..." value={notes[menuId] || ""} onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))} className="mt-1 h-8 text-xs" />
+                      <div key={menuId} className="flex items-center gap-2">
+                        <span className="text-sm font-medium shrink-0">{item?.name} <Badge variant="secondary" className="ml-1">x{qty}</Badge></span>
+                        <Input placeholder="Ghi chú..." value={notes[menuId] || ""} onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))} className="h-7 text-xs flex-1" />
                       </div>
                     );
                   })}
-                  <Button className="w-full" onClick={submitOrder}><Send className="mr-2 h-4 w-4" /> Đặt món</Button>
+                  <Button className="w-full" onClick={submitOrder}><Send className="mr-2 h-4 w-4" /> Đặt món ({Object.values(cart).reduce((a, b) => a + b, 0)} món)</Button>
                 </div>
               )}
             </div>
