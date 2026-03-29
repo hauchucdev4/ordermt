@@ -9,7 +9,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Minus, Trash2, Send } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
