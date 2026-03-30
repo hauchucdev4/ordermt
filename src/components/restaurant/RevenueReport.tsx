@@ -130,21 +130,34 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     const wb = XLSX.utils.book_new();
 
     // Summary sheet
+    const filterLabel = filter === "custom" ? `${customStart} - ${customEnd}` : filters.find(f => f.value === filter)?.label || filter;
     const summaryData = [
-      ["Báo cáo doanh thu", restaurantName],
-      ["Thời gian", filter === "custom" ? `${customStart} - ${customEnd}` : filter],
-      ["Tổng doanh thu", totalRevenue],
-      ["Tổng số order", totalOrders],
-      ["Số bàn phục vụ", totalTables],
+      ["BAO CAO DOANH THU"],
+      [],
+      ["Nha hang", restaurantName],
+      ["Thoi gian", filterLabel],
+      ["Ngay xuat", new Date().toLocaleString("vi-VN")],
+      [],
+      ["CHI TIEU", "GIA TRI"],
+      ["Tong doanh thu (VND)", totalRevenue],
+      ["Tong so hoa don", totalOrders],
+      ["So ban phuc vu", totalTables],
+      ["Doanh thu trung binh/hoa don (VND)", totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0],
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(wb, ws1, "Tổng quan");
+    ws1["!cols"] = [{ wch: 32 }, { wch: 28 }];
+    XLSX.utils.book_append_sheet(wb, ws1, "Tong quan");
 
     // Detail sheet
-    const detailRows: any[][] = [["Bàn", "Món", "SL", "Đơn giá", "Thành tiền", "Tổng bill", "Ngày thanh toán"]];
+    const detailRows: any[][] = [
+      ["STT", "Ban", "Mon", "So luong", "Don gia (VND)", "Thanh tien (VND)", "Tong hoa don (VND)", "Ngay thanh toan"],
+    ];
+    let stt = 0;
     tableDetails.forEach(td => {
+      stt++;
       td.items.forEach((item, i) => {
         detailRows.push([
+          i === 0 ? stt : "",
           i === 0 ? td.tableName : "",
           item.name,
           item.quantity,
@@ -155,8 +168,34 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
         ]);
       });
     });
+    // Grand total row
+    detailRows.push([]);
+    detailRows.push(["", "", "", "", "", "TONG CONG:", totalRevenue, ""]);
+
     const ws2 = XLSX.utils.aoa_to_sheet(detailRows);
-    XLSX.utils.book_append_sheet(wb, ws2, "Chi tiết");
+    ws2["!cols"] = [
+      { wch: 5 }, { wch: 12 }, { wch: 24 }, { wch: 9 },
+      { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 20 },
+    ];
+    XLSX.utils.book_append_sheet(wb, ws2, "Chi tiet");
+
+    // Daily summary sheet
+    const dailyRows: any[][] = [["Ngay", "So hoa don", "Doanh thu (VND)"]];
+    const dailyMap: Record<string, { count: number; revenue: number }> = {};
+    tableDetails.forEach(td => {
+      const day = new Date(td.paidAt).toLocaleDateString("vi-VN");
+      if (!dailyMap[day]) dailyMap[day] = { count: 0, revenue: 0 };
+      dailyMap[day].count++;
+      dailyMap[day].revenue += td.total;
+    });
+    Object.entries(dailyMap).forEach(([day, d]) => {
+      dailyRows.push([day, d.count, d.revenue]);
+    });
+    dailyRows.push([]);
+    dailyRows.push(["TONG CONG", totalOrders, totalRevenue]);
+    const ws3 = XLSX.utils.aoa_to_sheet(dailyRows);
+    ws3["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, ws3, "Theo ngay");
 
     XLSX.writeFile(wb, `doanh-thu-${restaurantName}-${Date.now()}.xlsx`);
   };
@@ -166,29 +205,91 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     const { default: autoTable } = await import("jspdf-autotable");
 
     const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`Bao cao doanh thu - ${restaurantName}`, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Tong doanh thu: ${totalRevenue.toLocaleString("vi-VN")} VND`, 14, 30);
-    doc.text(`Tong so order: ${totalOrders}`, 14, 36);
-    doc.text(`So ban phuc vu: ${totalTables}`, 14, 42);
+    const pw = doc.internal.pageSize.getWidth();
+    const filterLabel = filter === "custom" ? `${customStart} - ${customEnd}` : filters.find(f => f.value === filter)?.label || filter;
 
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("BAO CAO DOANH THU", pw / 2, 20, { align: "center" });
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(restaurantName, pw / 2, 28, { align: "center" });
+    doc.setFontSize(9);
+    doc.text(`Thoi gian: ${filterLabel}  |  Ngay xuat: ${new Date().toLocaleString("vi-VN")}`, pw / 2, 34, { align: "center" });
+
+    // Divider
+    doc.setDrawColor(30, 41, 59);
+    doc.setLineWidth(0.8);
+    doc.line(14, 37, pw - 14, 37);
+
+    // Summary cards
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    const summaryY = 44;
+    const cols = [
+      { label: "Tong doanh thu", value: `${totalRevenue.toLocaleString("vi-VN")} VND` },
+      { label: "Tong hoa don", value: `${totalOrders}` },
+      { label: "So ban phuc vu", value: `${totalTables}` },
+      { label: "TB/hoa don", value: `${totalOrders > 0 ? Math.round(totalRevenue / totalOrders).toLocaleString("vi-VN") : 0} VND` },
+    ];
+    const colW = (pw - 28) / cols.length;
+    cols.forEach((c, i) => {
+      const x = 14 + i * colW;
+      doc.setFillColor(245, 247, 250);
+      doc.roundedRect(x, summaryY - 4, colW - 4, 16, 2, 2, "F");
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text(c.label, x + (colW - 4) / 2, summaryY + 1, { align: "center" });
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 41, 59);
+      doc.text(c.value, x + (colW - 4) / 2, summaryY + 9, { align: "center" });
+    });
+
+    // Detail table
+    let stt = 0;
     autoTable(doc, {
-      startY: 50,
-      head: [["Ban", "Mon", "SL", "Don gia", "Thanh tien", "Tong bill"]],
-      body: tableDetails.flatMap(td =>
-        td.items.map((item, i) => [
+      startY: summaryY + 18,
+      head: [["STT", "Ban", "Mon", "SL", "Don gia", "Thanh tien", "Tong HD", "Ngay TT"]],
+      body: tableDetails.flatMap(td => {
+        stt++;
+        return td.items.map((item, i) => [
+          i === 0 ? stt : "",
           i === 0 ? td.tableName : "",
           item.name,
           item.quantity,
           item.price.toLocaleString("vi-VN"),
           (item.quantity * item.price).toLocaleString("vi-VN"),
           i === 0 ? td.total.toLocaleString("vi-VN") : "",
-        ])
-      ),
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [30, 41, 59] },
+          i === 0 ? new Date(td.paidAt).toLocaleString("vi-VN") : "",
+        ]);
+      }),
+      foot: [["", "", "", "", "", "TONG CONG:", totalRevenue.toLocaleString("vi-VN") + " VND", ""]],
+      styles: { fontSize: 8, cellPadding: 2, textColor: [30, 30, 30] },
+      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: "bold" },
+      footStyles: { fillColor: [240, 240, 240], textColor: [30, 41, 59], fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 10 },
+        3: { halign: "center", cellWidth: 10 },
+        4: { halign: "right" },
+        5: { halign: "right" },
+        6: { halign: "right" },
+      },
     });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Trang ${i}/${pageCount}`, pw - 14, doc.internal.pageSize.getHeight() - 10, { align: "right" });
+      doc.text(restaurantName, 14, doc.internal.pageSize.getHeight() - 10);
+    }
 
     doc.save(`doanh-thu-${restaurantName}-${Date.now()}.pdf`);
   };
