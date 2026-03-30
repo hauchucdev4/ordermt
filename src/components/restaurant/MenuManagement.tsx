@@ -35,8 +35,8 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  const fetchItems = async () => {
-    setLoading(true);
+  const fetchItems = async (showLoader = false) => {
+    if (showLoader) setLoading(true);
     const { data } = await supabase
       .from("menu_items")
       .select("*")
