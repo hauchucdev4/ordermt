@@ -130,21 +130,34 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     const wb = XLSX.utils.book_new();
 
     // Summary sheet
+    const filterLabel = filter === "custom" ? `${customStart} - ${customEnd}` : filters.find(f => f.value === filter)?.label || filter;
     const summaryData = [
-      ["Báo cáo doanh thu", restaurantName],
-      ["Thời gian", filter === "custom" ? `${customStart} - ${customEnd}` : filter],
-      ["Tổng doanh thu", totalRevenue],
-      ["Tổng số order", totalOrders],
-      ["Số bàn phục vụ", totalTables],
+      ["BAO CAO DOANH THU"],
+      [],
+      ["Nha hang", restaurantName],
+      ["Thoi gian", filterLabel],
+      ["Ngay xuat", new Date().toLocaleString("vi-VN")],
+      [],
+      ["CHI TIEU", "GIA TRI"],
+      ["Tong doanh thu (VND)", totalRevenue],
+      ["Tong so hoa don", totalOrders],
+      ["So ban phuc vu", totalTables],
+      ["Doanh thu trung binh/hoa don (VND)", totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0],
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(wb, ws1, "Tổng quan");
+    ws1["!cols"] = [{ wch: 32 }, { wch: 28 }];
+    XLSX.utils.book_append_sheet(wb, ws1, "Tong quan");
 
     // Detail sheet
-    const detailRows: any[][] = [["Bàn", "Món", "SL", "Đơn giá", "Thành tiền", "Tổng bill", "Ngày thanh toán"]];
+    const detailRows: any[][] = [
+      ["STT", "Ban", "Mon", "So luong", "Don gia (VND)", "Thanh tien (VND)", "Tong hoa don (VND)", "Ngay thanh toan"],
+    ];
+    let stt = 0;
     tableDetails.forEach(td => {
+      stt++;
       td.items.forEach((item, i) => {
         detailRows.push([
+          i === 0 ? stt : "",
           i === 0 ? td.tableName : "",
           item.name,
           item.quantity,
@@ -155,8 +168,34 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
         ]);
       });
     });
+    // Grand total row
+    detailRows.push([]);
+    detailRows.push(["", "", "", "", "", "TONG CONG:", totalRevenue, ""]);
+
     const ws2 = XLSX.utils.aoa_to_sheet(detailRows);
-    XLSX.utils.book_append_sheet(wb, ws2, "Chi tiết");
+    ws2["!cols"] = [
+      { wch: 5 }, { wch: 12 }, { wch: 24 }, { wch: 9 },
+      { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 20 },
+    ];
+    XLSX.utils.book_append_sheet(wb, ws2, "Chi tiet");
+
+    // Daily summary sheet
+    const dailyRows: any[][] = [["Ngay", "So hoa don", "Doanh thu (VND)"]];
+    const dailyMap: Record<string, { count: number; revenue: number }> = {};
+    tableDetails.forEach(td => {
+      const day = new Date(td.paidAt).toLocaleDateString("vi-VN");
+      if (!dailyMap[day]) dailyMap[day] = { count: 0, revenue: 0 };
+      dailyMap[day].count++;
+      dailyMap[day].revenue += td.total;
+    });
+    Object.entries(dailyMap).forEach(([day, d]) => {
+      dailyRows.push([day, d.count, d.revenue]);
+    });
+    dailyRows.push([]);
+    dailyRows.push(["TONG CONG", totalOrders, totalRevenue]);
+    const ws3 = XLSX.utils.aoa_to_sheet(dailyRows);
+    ws3["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, ws3, "Theo ngay");
 
     XLSX.writeFile(wb, `doanh-thu-${restaurantName}-${Date.now()}.xlsx`);
   };
@@ -166,29 +205,91 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     const { default: autoTable } = await import("jspdf-autotable");
 
     const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`Bao cao doanh thu - ${restaurantName}`, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Tong doanh thu: ${totalRevenue.toLocaleString("vi-VN")} VND`, 14, 30);
-    doc.text(`Tong so order: ${totalOrders}`, 14, 36);
-    doc.text(`So ban phuc vu: ${totalTables}`, 14, 42);
+    const pw = doc.internal.pageSize.getWidth();
+    const filterLabel = filter === "custom" ? `${customStart} - ${customEnd}` : filters.find(f => f.value === filter)?.label || filter;
 
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("BAO CAO DOANH THU", pw / 2, 20, { align: "center" });
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(restaurantName, pw / 2, 28, { align: "center" });
+    doc.setFontSize(9);
+    doc.text(`Thoi gian: ${filterLabel}  |  Ngay xuat: ${new Date().toLocaleString("vi-VN")}`, pw / 2, 34, { align: "center" });
+
+    // Divider
+    doc.setDrawColor(30, 41, 59);
+    doc.setLineWidth(0.8);
+    doc.line(14, 37, pw - 14, 37);
+
+    // Summary cards
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    const summaryY = 44;
+    const cols = [
+      { label: "Tong doanh thu", value: `${totalRevenue.toLocaleString("vi-VN")} VND` },
+      { label: "Tong hoa don", value: `${totalOrders}` },
+      { label: "So ban phuc vu", value: `${totalTables}` },
+      { label: "TB/hoa don", value: `${totalOrders > 0 ? Math.round(totalRevenue / totalOrders).toLocaleString("vi-VN") : 0} VND` },
+    ];
+    const colW = (pw - 28) / cols.length;
+    cols.forEach((c, i) => {
+      const x = 14 + i * colW;
+      doc.setFillColor(245, 247, 250);
+      doc.roundedRect(x, summaryY - 4, colW - 4, 16, 2, 2, "F");
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text(c.label, x + (colW - 4) / 2, summaryY + 1, { align: "center" });
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 41, 59);
+      doc.text(c.value, x + (colW - 4) / 2, summaryY + 9, { align: "center" });
+    });
+
+    // Detail table
+    let stt = 0;
     autoTable(doc, {
-      startY: 50,
-      head: [["Ban", "Mon", "SL", "Don gia", "Thanh tien", "Tong bill"]],
-      body: tableDetails.flatMap(td =>
-        td.items.map((item, i) => [
+      startY: summaryY + 18,
+      head: [["STT", "Ban", "Mon", "SL", "Don gia", "Thanh tien", "Tong HD", "Ngay TT"]],
+      body: tableDetails.flatMap(td => {
+        stt++;
+        return td.items.map((item, i) => [
+          i === 0 ? stt : "",
           i === 0 ? td.tableName : "",
           item.name,
           item.quantity,
           item.price.toLocaleString("vi-VN"),
           (item.quantity * item.price).toLocaleString("vi-VN"),
           i === 0 ? td.total.toLocaleString("vi-VN") : "",
-        ])
-      ),
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [30, 41, 59] },
+          i === 0 ? new Date(td.paidAt).toLocaleString("vi-VN") : "",
+        ]);
+      }),
+      foot: [["", "", "", "", "", "TONG CONG:", totalRevenue.toLocaleString("vi-VN") + " VND", ""]],
+      styles: { fontSize: 8, cellPadding: 2, textColor: [30, 30, 30] },
+      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: "bold" },
+      footStyles: { fillColor: [240, 240, 240], textColor: [30, 41, 59], fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 10 },
+        3: { halign: "center", cellWidth: 10 },
+        4: { halign: "right" },
+        5: { halign: "right" },
+        6: { halign: "right" },
+      },
     });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Trang ${i}/${pageCount}`, pw - 14, doc.internal.pageSize.getHeight() - 10, { align: "right" });
+      doc.text(restaurantName, 14, doc.internal.pageSize.getHeight() - 10);
+    }
 
     doc.save(`doanh-thu-${restaurantName}-${Date.now()}.pdf`);
   };
@@ -196,37 +297,76 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
   const printTableBill = (detail: TableDetail) => {
     import("jspdf").then(({ default: jsPDF }) => {
       import("jspdf-autotable").then(({ default: autoTable }) => {
-        const doc = new jsPDF({ unit: "mm", format: [80, 200] });
+        const doc = new jsPDF({ unit: "mm", format: [80, 250] });
         const w = 80;
+        let y = 8;
 
-        doc.setFontSize(12);
-        doc.text(restaurantName || "Nha hang", w / 2, 10, { align: "center" });
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(restaurantName || "Nha hang", w / 2, y, { align: "center" });
+        y += 6;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("HOA DON THANH TOAN", w / 2, y, { align: "center" });
+        y += 5;
+        doc.setDrawColor(100);
+        doc.setLineWidth(0.5);
+        doc.line(5, y, w - 5, y);
+        y += 4;
+
         doc.setFontSize(8);
-        doc.text(detail.tableName, w / 2, 16, { align: "center" });
-        doc.text(new Date(detail.paidAt).toLocaleString("vi-VN"), w / 2, 20, { align: "center" });
-        doc.line(5, 23, w - 5, 23);
+        doc.text(`Ban: ${detail.tableName}`, 5, y);
+        doc.text(`Ngay: ${new Date(detail.paidAt).toLocaleString("vi-VN")}`, w - 5, y, { align: "right" });
+        y += 4;
+        doc.setLineWidth(0.2);
+        doc.line(5, y, w - 5, y);
+        y += 1;
 
         autoTable(doc, {
-          startY: 26,
+          startY: y,
           margin: { left: 5, right: 5 },
-          head: [["Mon", "SL", "Gia", "T.Tien"]],
+          head: [["Mon", "SL", "Don gia", "T.Tien"]],
           body: detail.items.map(i => [
             i.name, i.quantity.toString(),
             i.price.toLocaleString("vi-VN"),
             (i.quantity * i.price).toLocaleString("vi-VN"),
           ]),
-          styles: { fontSize: 7, cellPadding: 1 },
-          headStyles: { fillColor: [50, 50, 50] },
+          styles: { fontSize: 7, cellPadding: 1.5, textColor: [30, 30, 30] },
+          headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: "bold" },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
           theme: "grid",
+          columnStyles: {
+            0: { cellWidth: "auto" },
+            1: { halign: "center", cellWidth: 8 },
+            2: { halign: "right", cellWidth: 16 },
+            3: { halign: "right", cellWidth: 18 },
+          },
         });
 
-        const finalY = (doc as any).lastAutoTable?.finalY || 60;
-        doc.setFontSize(10);
-        doc.text(`TONG: ${detail.total.toLocaleString("vi-VN")} VND`, w / 2, finalY + 6, { align: "center" });
+        const finalY = (doc as any).lastAutoTable?.finalY || 80;
+        let fy = finalY + 3;
+        doc.setLineWidth(0.5);
+        doc.line(5, fy, w - 5, fy);
+        fy += 5;
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text("TONG CONG:", 5, fy);
+        doc.text(`${detail.total.toLocaleString("vi-VN")} VND`, w - 5, fy, { align: "right" });
+        fy += 4;
+        doc.setLineWidth(0.5);
+        doc.line(5, fy, w - 5, fy);
+        fy += 6;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("DA THANH TOAN", w / 2, fy, { align: "center" });
+        fy += 5;
         doc.setFontSize(8);
-        doc.text("DA THANH TOAN", w / 2, finalY + 12, { align: "center" });
+        doc.setFont("helvetica", "normal");
+        doc.text("Cam on quy khach!", w / 2, fy, { align: "center" });
+        fy += 4;
+        doc.text("Hen gap lai!", w / 2, fy, { align: "center" });
 
-        doc.save(`bill-${detail.tableName}-${Date.now()}.pdf`);
+        doc.save(`hoa-don-${detail.tableName}-${Date.now()}.pdf`);
       });
     });
   };
@@ -371,34 +511,56 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
 
       {/* Bill preview dialog */}
       <Dialog open={!!selectedBill} onOpenChange={open => !open && setSelectedBill(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" /> Bill - {selectedBill?.tableName}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          <div className="bg-primary/5 border-b px-6 py-4">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Receipt className="h-5 w-5 text-primary" /> Hóa đơn - {selectedBill?.tableName}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {restaurantName && <span className="font-medium">{restaurantName} • </span>}
+                {selectedBill && new Date(selectedBill.paidAt).toLocaleString("vi-VN")}
+              </p>
+            </DialogHeader>
+          </div>
           {selectedBill && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{new Date(selectedBill.paidAt).toLocaleString("vi-VN")}</p>
-              <div className="space-y-2">
-                {selectedBill.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>{item.name} x{item.quantity} @ {item.price.toLocaleString("vi-VN")}₫</span>
-                    <span>{(item.quantity * item.price).toLocaleString("vi-VN")}₫</span>
-                  </div>
-                ))}
+            <div className="px-6 py-4 space-y-4">
+              <div className="rounded-lg border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50 text-muted-foreground">
+                      <th className="text-left py-2 px-3 font-medium">Món</th>
+                      <th className="text-center py-2 px-3 font-medium w-12">SL</th>
+                      <th className="text-right py-2 px-3 font-medium w-24">Đơn giá</th>
+                      <th className="text-right py-2 px-3 font-medium w-28">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedBill.items.map((item, idx) => (
+                      <tr key={idx} className="border-t">
+                        <td className="py-2 px-3">{item.name}</td>
+                        <td className="py-2 px-3 text-center">{item.quantity}</td>
+                        <td className="py-2 px-3 text-right text-muted-foreground">{item.price.toLocaleString("vi-VN")}₫</td>
+                        <td className="py-2 px-3 text-right font-medium">{(item.quantity * item.price).toLocaleString("vi-VN")}₫</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <Separator />
-              <div className="flex justify-between font-bold text-lg">
-                <span>Tổng cộng</span>
-                <span className="text-primary">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
+              <div className="flex justify-between items-center bg-primary/5 rounded-lg p-4">
+                <span className="font-semibold text-lg">Tổng cộng</span>
+                <span className="text-primary font-bold text-xl">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
               </div>
-              <Badge className="bg-success text-success-foreground">ĐÃ THANH TOÁN</Badge>
-              <Button variant="outline" className="w-full" onClick={() => printTableBill(selectedBill)}>
-                <FileText className="mr-2 h-4 w-4" /> Xuất bill PDF
-              </Button>
+              <div className="flex items-center justify-between">
+                <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">ĐÃ THANH TOÁN</Badge>
+              </div>
             </div>
           )}
+          <div className="border-t px-6 py-4">
+            <Button variant="outline" className="w-full" onClick={() => selectedBill && printTableBill(selectedBill)}>
+              <FileText className="mr-2 h-4 w-4" /> Xuất hóa đơn PDF
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
