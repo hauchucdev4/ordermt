@@ -35,8 +35,8 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  const fetchItems = async () => {
-    setLoading(true);
+  const fetchItems = async (showLoader = false) => {
+    if (showLoader) setLoading(true);
     const { data } = await supabase
       .from("menu_items")
       .select("*")
@@ -47,7 +47,7 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
     setLoading(false);
   };
 
-  useEffect(() => { fetchItems(); }, [restaurantId]);
+  useEffect(() => { fetchItems(true); }, [restaurantId]);
 
   const categories = [...new Set(items.map((i) => i.category))].sort();
 
@@ -92,15 +92,15 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
   };
 
   const toggleAvailable = async (item: MenuItem) => {
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, available: !i.available } : i));
     await supabase.from("menu_items").update({ available: !item.available }).eq("id", item.id);
-    fetchItems();
   };
 
   const handleDelete = async (item: MenuItem) => {
     if (!confirm(`Xóa món "${item.name}"?`)) return;
+    setItems(prev => prev.filter(i => i.id !== item.id));
     await supabase.from("menu_items").delete().eq("id", item.id);
     toast({ title: "Đã xóa món" });
-    fetchItems();
   };
 
   const filtered = filterCat === "all" ? items : items.filter((i) => i.category === filterCat);

@@ -26,8 +26,8 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
   const [editTarget, setEditTarget] = useState<TableRow | null>(null);
   const [editName, setEditName] = useState("");
 
-  const fetchTables = async () => {
-    setLoading(true);
+  const fetchTables = async (showLoader = false) => {
+    if (showLoader) setLoading(true);
     const { data } = await supabase
       .from("tables")
       .select("*")
@@ -38,7 +38,7 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
   };
 
   useEffect(() => {
-    fetchTables();
+    fetchTables(true);
     const channel = supabase
       .channel(`table-mgmt-${restaurantId}-${Date.now()}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tables", filter: `restaurant_id=eq.${restaurantId}` }, () => fetchTables())
@@ -66,9 +66,9 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
 
   const handleDelete = async (t: TableRow) => {
     if (!confirm(`Xóa bàn "${t.name}"?`)) return;
+    setTables(prev => prev.filter(tb => tb.id !== t.id));
     await supabase.from("tables").delete().eq("id", t.id);
     toast({ title: "Đã xóa bàn" });
-    fetchTables();
   };
 
   if (loading) {

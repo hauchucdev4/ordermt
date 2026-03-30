@@ -85,8 +85,8 @@ export default function ChefKitchenPage() {
   }, [profile?.restaurant_id]);
 
   const updateStatus = async (itemId: string, newStatus: "preparing" | "done") => {
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i));
     await supabase.from("order_items").update({ status: newStatus }).eq("id", itemId);
-    fetchItems();
   };
 
   const newItems = items.filter(i => i.status === "new");
