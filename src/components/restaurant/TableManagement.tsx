@@ -38,7 +38,7 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
   };
 
   useEffect(() => {
-    fetchTables();
+    fetchTables(true);
     const channel = supabase
       .channel(`table-mgmt-${restaurantId}-${Date.now()}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tables", filter: `restaurant_id=eq.${restaurantId}` }, () => fetchTables())
