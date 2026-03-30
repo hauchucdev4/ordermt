@@ -158,43 +158,68 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
       )}
 
       <Dialog open={!!selectedBill} onOpenChange={open => !open && setSelectedBill(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" /> Bill - {selectedBill?.table.name}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {/* Header */}
+          <div className="bg-primary/5 border-b px-6 py-4">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Receipt className="h-5 w-5 text-primary" /> Hóa đơn - {selectedBill?.table.name}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {restaurantName && <span className="font-medium">{restaurantName} • </span>}
+                {selectedBill && new Date(selectedBill.createdAt).toLocaleString("vi-VN")}
+              </p>
+            </DialogHeader>
+          </div>
+
           {selectedBill && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{new Date(selectedBill.createdAt).toLocaleString("vi-VN")}</p>
-              <div className="space-y-2">
-                {selectedBill.items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Chưa có món nào</p>
-                ) : (
-                  selectedBill.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span>{item.name} x{item.quantity}</span>
-                      <span>{(item.quantity * item.price).toLocaleString("vi-VN")}₫</span>
-                    </div>
-                  ))
-                )}
-              </div>
-              <Separator />
-              <div className="flex justify-between font-bold text-lg">
-                <span>Tổng cộng</span>
-                <span className="text-primary">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
+            <div className="px-6 py-4 space-y-4">
+              {/* Items table */}
+              {selectedBill.items.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Chưa có món nào</p>
+              ) : (
+                <div className="rounded-lg border overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted/50 text-muted-foreground">
+                        <th className="text-left py-2 px-3 font-medium">Món</th>
+                        <th className="text-center py-2 px-3 font-medium w-12">SL</th>
+                        <th className="text-right py-2 px-3 font-medium w-24">Đơn giá</th>
+                        <th className="text-right py-2 px-3 font-medium w-28">Thành tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedBill.items.map((item, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="py-2 px-3">{item.name}</td>
+                          <td className="py-2 px-3 text-center">{item.quantity}</td>
+                          <td className="py-2 px-3 text-right text-muted-foreground">{item.price.toLocaleString("vi-VN")}₫</td>
+                          <td className="py-2 px-3 text-right font-medium">{(item.quantity * item.price).toLocaleString("vi-VN")}₫</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Total */}
+              <div className="flex justify-between items-center bg-primary/5 rounded-lg p-4">
+                <span className="font-semibold text-lg">Tổng cộng</span>
+                <span className="text-primary font-bold text-xl">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
               </div>
             </div>
           )}
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={printBill} disabled={!selectedBill?.items.length}>
-              <FileText className="mr-2 h-4 w-4" /> Xuất bill PDF
+
+          {/* Actions */}
+          <div className="border-t px-6 py-4 flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" className="flex-1" onClick={printBill} disabled={!selectedBill?.items.length}>
+              <FileText className="mr-2 h-4 w-4" /> Xuất hóa đơn PDF
             </Button>
-            <Button onClick={handlePay} disabled={paying || !selectedBill?.items.length}>
+            <Button className="flex-1" onClick={handlePay} disabled={paying || !selectedBill?.items.length}>
               {paying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <CreditCard className="mr-2 h-4 w-4" /> Xác nhận thanh toán
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
