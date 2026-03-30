@@ -46,6 +46,7 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
         .map(oi => ({ name: menuMap.get(oi.menu_item_id) || "?", quantity: oi.quantity, status: oi.status as string })),
     })));
     setLoading(false);
+    initialLoadRef.current = false;
   }, [restaurantId]);
 
   useEffect(() => {

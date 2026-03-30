@@ -98,9 +98,9 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
 
   const handleDelete = async (item: MenuItem) => {
     if (!confirm(`Xóa món "${item.name}"?`)) return;
+    setItems(prev => prev.filter(i => i.id !== item.id));
     await supabase.from("menu_items").delete().eq("id", item.id);
     toast({ title: "Đã xóa món" });
-    fetchItems();
   };
 
   const filtered = filterCat === "all" ? items : items.filter((i) => i.category === filterCat);

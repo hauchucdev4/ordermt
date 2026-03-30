@@ -66,9 +66,9 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
 
   const handleDelete = async (t: TableRow) => {
     if (!confirm(`Xóa bàn "${t.name}"?`)) return;
+    setTables(prev => prev.filter(tb => tb.id !== t.id));
     await supabase.from("tables").delete().eq("id", t.id);
     toast({ title: "Đã xóa bàn" });
-    fetchTables();
   };
 
   if (loading) {
