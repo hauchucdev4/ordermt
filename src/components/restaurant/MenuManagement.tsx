@@ -47,7 +47,7 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
     setLoading(false);
   };
 
-  useEffect(() => { fetchItems(); }, [restaurantId]);
+  useEffect(() => { fetchItems(true); }, [restaurantId]);
 
   const categories = [...new Set(items.map((i) => i.category))].sort();
 
