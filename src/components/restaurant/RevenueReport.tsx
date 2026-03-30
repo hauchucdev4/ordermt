@@ -511,34 +511,56 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
 
       {/* Bill preview dialog */}
       <Dialog open={!!selectedBill} onOpenChange={open => !open && setSelectedBill(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" /> Bill - {selectedBill?.tableName}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          <div className="bg-primary/5 border-b px-6 py-4">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Receipt className="h-5 w-5 text-primary" /> Hóa đơn - {selectedBill?.tableName}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {restaurantName && <span className="font-medium">{restaurantName} • </span>}
+                {selectedBill && new Date(selectedBill.paidAt).toLocaleString("vi-VN")}
+              </p>
+            </DialogHeader>
+          </div>
           {selectedBill && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{new Date(selectedBill.paidAt).toLocaleString("vi-VN")}</p>
-              <div className="space-y-2">
-                {selectedBill.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>{item.name} x{item.quantity} @ {item.price.toLocaleString("vi-VN")}₫</span>
-                    <span>{(item.quantity * item.price).toLocaleString("vi-VN")}₫</span>
-                  </div>
-                ))}
+            <div className="px-6 py-4 space-y-4">
+              <div className="rounded-lg border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50 text-muted-foreground">
+                      <th className="text-left py-2 px-3 font-medium">Món</th>
+                      <th className="text-center py-2 px-3 font-medium w-12">SL</th>
+                      <th className="text-right py-2 px-3 font-medium w-24">Đơn giá</th>
+                      <th className="text-right py-2 px-3 font-medium w-28">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedBill.items.map((item, idx) => (
+                      <tr key={idx} className="border-t">
+                        <td className="py-2 px-3">{item.name}</td>
+                        <td className="py-2 px-3 text-center">{item.quantity}</td>
+                        <td className="py-2 px-3 text-right text-muted-foreground">{item.price.toLocaleString("vi-VN")}₫</td>
+                        <td className="py-2 px-3 text-right font-medium">{(item.quantity * item.price).toLocaleString("vi-VN")}₫</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <Separator />
-              <div className="flex justify-between font-bold text-lg">
-                <span>Tổng cộng</span>
-                <span className="text-primary">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
+              <div className="flex justify-between items-center bg-primary/5 rounded-lg p-4">
+                <span className="font-semibold text-lg">Tổng cộng</span>
+                <span className="text-primary font-bold text-xl">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
               </div>
-              <Badge className="bg-success text-success-foreground">ĐÃ THANH TOÁN</Badge>
-              <Button variant="outline" className="w-full" onClick={() => printTableBill(selectedBill)}>
-                <FileText className="mr-2 h-4 w-4" /> Xuất bill PDF
-              </Button>
+              <div className="flex items-center justify-between">
+                <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">ĐÃ THANH TOÁN</Badge>
+              </div>
             </div>
           )}
+          <div className="border-t px-6 py-4">
+            <Button variant="outline" className="w-full" onClick={() => selectedBill && printTableBill(selectedBill)}>
+              <FileText className="mr-2 h-4 w-4" /> Xuất hóa đơn PDF
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
