@@ -102,30 +102,84 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
     if (!selectedBill) return;
     import("jspdf").then(({ default: jsPDF }) => {
       import("jspdf-autotable").then(({ default: autoTable }) => {
-        const doc = new jsPDF({ unit: "mm", format: [80, 200] });
+        const doc = new jsPDF({ unit: "mm", format: [80, 250] });
         const w = 80;
-        doc.setFontSize(12);
-        doc.text(restaurantName || "Nhà hàng", w / 2, 10, { align: "center" });
-        doc.setFontSize(8);
-        doc.text(`${selectedBill.table.name}`, w / 2, 16, { align: "center" });
-        doc.text(new Date().toLocaleString("vi-VN"), w / 2, 20, { align: "center" });
-        doc.setLineWidth(0.3);
-        doc.line(5, 23, w - 5, 23);
+        let y = 8;
 
+        // Header
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(restaurantName || "Nha hang", w / 2, y, { align: "center" });
+        y += 6;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("HOA DON THANH TOAN", w / 2, y, { align: "center" });
+        y += 5;
+        doc.setDrawColor(100);
+        doc.setLineWidth(0.5);
+        doc.line(5, y, w - 5, y);
+        y += 4;
+
+        // Table info
+        doc.setFontSize(8);
+        doc.text(`Ban: ${selectedBill.table.name}`, 5, y);
+        doc.text(`Ngay: ${new Date().toLocaleString("vi-VN")}`, w - 5, y, { align: "right" });
+        y += 4;
+        doc.setLineWidth(0.2);
+        doc.line(5, y, w - 5, y);
+        y += 1;
+
+        // Items table
         autoTable(doc, {
-          startY: 26, margin: { left: 5, right: 5 },
-          head: [["Món", "SL", "Giá", "T.Tiền"]],
-          body: selectedBill.items.map(i => [i.name, i.quantity.toString(), i.price.toLocaleString("vi-VN"), (i.quantity * i.price).toLocaleString("vi-VN")]),
-          styles: { fontSize: 7, cellPadding: 1 }, headStyles: { fillColor: [50, 50, 50] }, theme: "grid",
+          startY: y,
+          margin: { left: 5, right: 5 },
+          head: [["Mon", "SL", "Don gia", "T.Tien"]],
+          body: selectedBill.items.map(i => [
+            i.name,
+            i.quantity.toString(),
+            i.price.toLocaleString("vi-VN"),
+            (i.quantity * i.price).toLocaleString("vi-VN"),
+          ]),
+          styles: { fontSize: 7, cellPadding: 1.5, textColor: [30, 30, 30] },
+          headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: "bold" },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          theme: "grid",
+          columnStyles: {
+            0: { cellWidth: "auto" },
+            1: { halign: "center", cellWidth: 8 },
+            2: { halign: "right", cellWidth: 16 },
+            3: { halign: "right", cellWidth: 18 },
+          },
         });
 
-        const finalY = (doc as any).lastAutoTable?.finalY || 60;
-        doc.setFontSize(10);
-        doc.text(`TỔNG: ${selectedBill.total.toLocaleString("vi-VN")}₫`, w / 2, finalY + 6, { align: "center" });
+        const finalY = (doc as any).lastAutoTable?.finalY || 80;
+        let fy = finalY + 3;
+        doc.setLineWidth(0.5);
+        doc.line(5, fy, w - 5, fy);
+        fy += 5;
+
+        // Total
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text("TONG CONG:", 5, fy);
+        doc.text(`${selectedBill.total.toLocaleString("vi-VN")} VND`, w - 5, fy, { align: "right" });
+        fy += 4;
+        doc.setLineWidth(0.5);
+        doc.line(5, fy, w - 5, fy);
+        fy += 6;
+
+        // Footer
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("DA THANH TOAN", w / 2, fy, { align: "center" });
+        fy += 5;
         doc.setFontSize(8);
-        doc.text("ĐÃ THANH TOÁN", w / 2, finalY + 12, { align: "center" });
-        doc.text("Cảm ơn quý khách!", w / 2, finalY + 17, { align: "center" });
-        doc.save(`bill-${selectedBill.table.name}-${Date.now()}.pdf`);
+        doc.setFont("helvetica", "normal");
+        doc.text("Cam on quy khach!", w / 2, fy, { align: "center" });
+        fy += 4;
+        doc.text("Hen gap lai!", w / 2, fy, { align: "center" });
+
+        doc.save(`hoa-don-${selectedBill.table.name}-${Date.now()}.pdf`);
       });
     });
   };
@@ -158,43 +212,68 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
       )}
 
       <Dialog open={!!selectedBill} onOpenChange={open => !open && setSelectedBill(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" /> Bill - {selectedBill?.table.name}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {/* Header */}
+          <div className="bg-primary/5 border-b px-6 py-4">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Receipt className="h-5 w-5 text-primary" /> Hóa đơn - {selectedBill?.table.name}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {restaurantName && <span className="font-medium">{restaurantName} • </span>}
+                {selectedBill && new Date(selectedBill.createdAt).toLocaleString("vi-VN")}
+              </p>
+            </DialogHeader>
+          </div>
+
           {selectedBill && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{new Date(selectedBill.createdAt).toLocaleString("vi-VN")}</p>
-              <div className="space-y-2">
-                {selectedBill.items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Chưa có món nào</p>
-                ) : (
-                  selectedBill.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span>{item.name} x{item.quantity}</span>
-                      <span>{(item.quantity * item.price).toLocaleString("vi-VN")}₫</span>
-                    </div>
-                  ))
-                )}
-              </div>
-              <Separator />
-              <div className="flex justify-between font-bold text-lg">
-                <span>Tổng cộng</span>
-                <span className="text-primary">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
+            <div className="px-6 py-4 space-y-4">
+              {/* Items table */}
+              {selectedBill.items.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Chưa có món nào</p>
+              ) : (
+                <div className="rounded-lg border overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted/50 text-muted-foreground">
+                        <th className="text-left py-2 px-3 font-medium">Món</th>
+                        <th className="text-center py-2 px-3 font-medium w-12">SL</th>
+                        <th className="text-right py-2 px-3 font-medium w-24">Đơn giá</th>
+                        <th className="text-right py-2 px-3 font-medium w-28">Thành tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedBill.items.map((item, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="py-2 px-3">{item.name}</td>
+                          <td className="py-2 px-3 text-center">{item.quantity}</td>
+                          <td className="py-2 px-3 text-right text-muted-foreground">{item.price.toLocaleString("vi-VN")}₫</td>
+                          <td className="py-2 px-3 text-right font-medium">{(item.quantity * item.price).toLocaleString("vi-VN")}₫</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Total */}
+              <div className="flex justify-between items-center bg-primary/5 rounded-lg p-4">
+                <span className="font-semibold text-lg">Tổng cộng</span>
+                <span className="text-primary font-bold text-xl">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
               </div>
             </div>
           )}
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={printBill} disabled={!selectedBill?.items.length}>
-              <FileText className="mr-2 h-4 w-4" /> Xuất bill PDF
+
+          {/* Actions */}
+          <div className="border-t px-6 py-4 flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" className="flex-1" onClick={printBill} disabled={!selectedBill?.items.length}>
+              <FileText className="mr-2 h-4 w-4" /> Xuất hóa đơn PDF
             </Button>
-            <Button onClick={handlePay} disabled={paying || !selectedBill?.items.length}>
+            <Button className="flex-1" onClick={handlePay} disabled={paying || !selectedBill?.items.length}>
               {paying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <CreditCard className="mr-2 h-4 w-4" /> Xác nhận thanh toán
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

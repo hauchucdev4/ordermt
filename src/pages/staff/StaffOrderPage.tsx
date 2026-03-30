@@ -214,29 +214,69 @@ export default function StaffOrderPage() {
     if (!selectedTable || orderItems.length === 0) return;
     import("jspdf").then(({ default: jsPDF }) => {
       import("jspdf-autotable").then(({ default: autoTable }) => {
-        const doc = new jsPDF({ unit: "mm", format: [80, 200] });
+        const doc = new jsPDF({ unit: "mm", format: [80, 250] });
         const w = 80;
-        doc.setFontSize(12);
-        doc.text(restaurantName || "Nhà hàng", w / 2, 10, { align: "center" });
+        let y = 8;
+
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(restaurantName || "Nha hang", w / 2, y, { align: "center" });
+        y += 6;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("HOA DON THANH TOAN", w / 2, y, { align: "center" });
+        y += 5;
+        doc.setDrawColor(100);
+        doc.setLineWidth(0.5);
+        doc.line(5, y, w - 5, y);
+        y += 4;
+
         doc.setFontSize(8);
-        doc.text(selectedTable.name, w / 2, 16, { align: "center" });
-        doc.text(new Date().toLocaleString("vi-VN"), w / 2, 20, { align: "center" });
-        doc.line(5, 23, w - 5, 23);
+        doc.text(`Ban: ${selectedTable.name}`, 5, y);
+        doc.text(`Ngay: ${new Date().toLocaleString("vi-VN")}`, w - 5, y, { align: "right" });
+        y += 4;
+        doc.setLineWidth(0.2);
+        doc.line(5, y, w - 5, y);
+        y += 1;
+
         const billItems = orderItems.map(i => ({
           name: i.menu_items?.name || "?", quantity: i.quantity, price: Number(i.menu_items?.price || 0),
         }));
         autoTable(doc, {
-          startY: 26, margin: { left: 5, right: 5 },
-          head: [["Món", "SL", "Giá", "T.Tiền"]],
+          startY: y, margin: { left: 5, right: 5 },
+          head: [["Mon", "SL", "Don gia", "T.Tien"]],
           body: billItems.map(i => [i.name, i.quantity.toString(), i.price.toLocaleString("vi-VN"), (i.quantity * i.price).toLocaleString("vi-VN")]),
-          styles: { fontSize: 7, cellPadding: 1 }, headStyles: { fillColor: [50, 50, 50] }, theme: "grid",
+          styles: { fontSize: 7, cellPadding: 1.5, textColor: [30, 30, 30] },
+          headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: "bold" },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          theme: "grid",
+          columnStyles: { 0: { cellWidth: "auto" }, 1: { halign: "center", cellWidth: 8 }, 2: { halign: "right", cellWidth: 16 }, 3: { halign: "right", cellWidth: 18 } },
         });
-        const finalY = (doc as any).lastAutoTable?.finalY || 60;
-        doc.setFontSize(10);
-        doc.text(`TỔNG: ${orderTotal.toLocaleString("vi-VN")}₫`, w / 2, finalY + 6, { align: "center" });
+
+        const finalY = (doc as any).lastAutoTable?.finalY || 80;
+        let fy = finalY + 3;
+        doc.setLineWidth(0.5);
+        doc.line(5, fy, w - 5, fy);
+        fy += 5;
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text("TONG CONG:", 5, fy);
+        doc.text(`${orderTotal.toLocaleString("vi-VN")} VND`, w - 5, fy, { align: "right" });
+        fy += 4;
+        doc.setLineWidth(0.5);
+        doc.line(5, fy, w - 5, fy);
+        fy += 6;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("DA THANH TOAN", w / 2, fy, { align: "center" });
+        fy += 5;
         doc.setFontSize(8);
-        doc.text("Cảm ơn quý khách!", w / 2, finalY + 12, { align: "center" });
-        doc.save(`bill-${selectedTable.name}-${Date.now()}.pdf`);
+        doc.setFont("helvetica", "normal");
+        doc.text("Cam on quy khach!", w / 2, fy, { align: "center" });
+        fy += 4;
+        doc.text("Hen gap lai!", w / 2, fy, { align: "center" });
+
+        doc.save(`hoa-don-${selectedTable.name}-${Date.now()}.pdf`);
       });
     });
   };
