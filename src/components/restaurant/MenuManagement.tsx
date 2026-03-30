@@ -92,8 +92,8 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
   };
 
   const toggleAvailable = async (item: MenuItem) => {
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, available: !i.available } : i));
     await supabase.from("menu_items").update({ available: !item.available }).eq("id", item.id);
-    fetchItems();
   };
 
   const handleDelete = async (item: MenuItem) => {
