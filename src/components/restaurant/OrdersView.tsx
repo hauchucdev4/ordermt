@@ -17,8 +17,10 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
   const [loading, setLoading] = useState(true);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
+  const initialLoadRef = useRef(true);
+
   const fetchOrders = useCallback(async () => {
-    setLoading(true);
+    if (initialLoadRef.current) setLoading(true);
     const { data: ordersData } = await supabase
       .from("orders").select("*").eq("restaurant_id", restaurantId).eq("status", "open").order("created_at", { ascending: false });
 
