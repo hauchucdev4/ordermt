@@ -26,8 +26,8 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
   const [editTarget, setEditTarget] = useState<TableRow | null>(null);
   const [editName, setEditName] = useState("");
 
-  const fetchTables = async () => {
-    setLoading(true);
+  const fetchTables = async (showLoader = false) => {
+    if (showLoader) setLoading(true);
     const { data } = await supabase
       .from("tables")
       .select("*")
