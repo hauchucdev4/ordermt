@@ -212,71 +212,17 @@ export default function StaffOrderPage() {
 
   const printBill = () => {
     if (!selectedTable || orderItems.length === 0) return;
-    import("jspdf").then(({ default: jsPDF }) => {
-      import("jspdf-autotable").then(({ default: autoTable }) => {
-        const doc = new jsPDF({ unit: "mm", format: [80, 250] });
-        const w = 80;
-        let y = 8;
-
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text(restaurantName || "Nha hang", w / 2, y, { align: "center" });
-        y += 6;
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        doc.text("HOA DON THANH TOAN", w / 2, y, { align: "center" });
-        y += 5;
-        doc.setDrawColor(100);
-        doc.setLineWidth(0.5);
-        doc.line(5, y, w - 5, y);
-        y += 4;
-
-        doc.setFontSize(8);
-        doc.text(`Ban: ${selectedTable.name}`, 5, y);
-        doc.text(`Ngay: ${new Date().toLocaleString("vi-VN")}`, w - 5, y, { align: "right" });
-        y += 4;
-        doc.setLineWidth(0.2);
-        doc.line(5, y, w - 5, y);
-        y += 1;
-
-        const billItems = orderItems.map(i => ({
-          name: i.menu_items?.name || "?", quantity: i.quantity, price: Number(i.menu_items?.price || 0),
-        }));
-        autoTable(doc, {
-          startY: y, margin: { left: 5, right: 5 },
-          head: [["Mon", "SL", "Don gia", "T.Tien"]],
-          body: billItems.map(i => [i.name, i.quantity.toString(), i.price.toLocaleString("vi-VN"), (i.quantity * i.price).toLocaleString("vi-VN")]),
-          styles: { fontSize: 7, cellPadding: 1.5, textColor: [30, 30, 30] },
-          headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: "bold" },
-          alternateRowStyles: { fillColor: [245, 245, 245] },
-          theme: "grid",
-          columnStyles: { 0: { cellWidth: "auto" }, 1: { halign: "center", cellWidth: 8 }, 2: { halign: "right", cellWidth: 16 }, 3: { halign: "right", cellWidth: 18 } },
-        });
-
-        const finalY = (doc as any).lastAutoTable?.finalY || 80;
-        let fy = finalY + 3;
-        doc.setLineWidth(0.5);
-        doc.line(5, fy, w - 5, fy);
-        fy += 5;
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "bold");
-        doc.text("TONG CONG:", 5, fy);
-        doc.text(`${orderTotal.toLocaleString("vi-VN")} VND`, w - 5, fy, { align: "right" });
-        fy += 4;
-        doc.setLineWidth(0.5);
-        doc.line(5, fy, w - 5, fy);
-        fy += 6;
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("DA THANH TOAN", w / 2, fy, { align: "center" });
-        fy += 5;
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text("Cam on quy khach!", w / 2, fy, { align: "center" });
-        fy += 4;
-        doc.text("Hen gap lai!", w / 2, fy, { align: "center" });
-
-        doc.save(`hoa-don-${selectedTable.name}-${Date.now()}.pdf`);
+    import("@/lib/printReceipt").then(({ printReceipt }) => {
+      const billItems = orderItems.map(i => ({
+        name: i.menu_items?.name || "?",
+        quantity: i.quantity,
+        price: Number(i.menu_items?.price || 0),
+      }));
+      printReceipt({
+        restaurantName: restaurantName || "Nha hang",
+        tableName: selectedTable.name,
+        items: billItems,
+        total: orderTotal,
       });
     });
   };
