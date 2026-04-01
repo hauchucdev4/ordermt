@@ -201,97 +201,18 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
   };
 
   const exportPDF = async () => {
-    const { default: jsPDF } = await import("jspdf");
-    const { default: autoTable } = await import("jspdf-autotable");
-
-    const doc = new jsPDF();
-    const pw = doc.internal.pageSize.getWidth();
-    const filterLabel = filter === "custom" ? `${customStart} - ${customEnd}` : filters.find(f => f.value === filter)?.label || filter;
-
-    // Header
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("BAO CAO DOANH THU", pw / 2, 20, { align: "center" });
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(restaurantName, pw / 2, 28, { align: "center" });
-    doc.setFontSize(9);
-    doc.text(`Thoi gian: ${filterLabel}  |  Ngay xuat: ${new Date().toLocaleString("vi-VN")}`, pw / 2, 34, { align: "center" });
-
-    // Divider
-    doc.setDrawColor(30, 41, 59);
-    doc.setLineWidth(0.8);
-    doc.line(14, 37, pw - 14, 37);
-
-    // Summary cards
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    const summaryY = 44;
-    const cols = [
-      { label: "Tong doanh thu", value: `${totalRevenue.toLocaleString("vi-VN")} VND` },
-      { label: "Tong hoa don", value: `${totalOrders}` },
-      { label: "So ban phuc vu", value: `${totalTables}` },
-      { label: "TB/hoa don", value: `${totalOrders > 0 ? Math.round(totalRevenue / totalOrders).toLocaleString("vi-VN") : 0} VND` },
-    ];
-    const colW = (pw - 28) / cols.length;
-    cols.forEach((c, i) => {
-      const x = 14 + i * colW;
-      doc.setFillColor(245, 247, 250);
-      doc.roundedRect(x, summaryY - 4, colW - 4, 16, 2, 2, "F");
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 100, 100);
-      doc.text(c.label, x + (colW - 4) / 2, summaryY + 1, { align: "center" });
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(30, 41, 59);
-      doc.text(c.value, x + (colW - 4) / 2, summaryY + 9, { align: "center" });
+    const { exportRevenuePDF } = await import("@/lib/exportRevenuePDF");
+    const filterLabel = filter === "custom"
+      ? `${customStart} - ${customEnd}`
+      : filters.find(f => f.value === filter)?.label || filter;
+    await exportRevenuePDF({
+      restaurantName,
+      filterLabel,
+      totalRevenue,
+      totalOrders,
+      totalTables,
+      tableDetails,
     });
-
-    // Detail table
-    let stt = 0;
-    autoTable(doc, {
-      startY: summaryY + 18,
-      head: [["STT", "Ban", "Mon", "SL", "Don gia", "Thanh tien", "Tong HD", "Ngay TT"]],
-      body: tableDetails.flatMap(td => {
-        stt++;
-        return td.items.map((item, i) => [
-          i === 0 ? stt : "",
-          i === 0 ? td.tableName : "",
-          item.name,
-          item.quantity,
-          item.price.toLocaleString("vi-VN"),
-          (item.quantity * item.price).toLocaleString("vi-VN"),
-          i === 0 ? td.total.toLocaleString("vi-VN") : "",
-          i === 0 ? new Date(td.paidAt).toLocaleString("vi-VN") : "",
-        ]);
-      }),
-      foot: [["", "", "", "", "", "TONG CONG:", totalRevenue.toLocaleString("vi-VN") + " VND", ""]],
-      styles: { fontSize: 8, cellPadding: 2, textColor: [30, 30, 30] },
-      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: "bold" },
-      footStyles: { fillColor: [240, 240, 240], textColor: [30, 41, 59], fontStyle: "bold" },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      columnStyles: {
-        0: { halign: "center", cellWidth: 10 },
-        3: { halign: "center", cellWidth: 10 },
-        4: { halign: "right" },
-        5: { halign: "right" },
-        6: { halign: "right" },
-      },
-    });
-
-    // Footer
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(150, 150, 150);
-      doc.text(`Trang ${i}/${pageCount}`, pw - 14, doc.internal.pageSize.getHeight() - 10, { align: "right" });
-      doc.text(restaurantName, 14, doc.internal.pageSize.getHeight() - 10);
-    }
-
-    doc.save(`doanh-thu-${restaurantName}-${Date.now()}.pdf`);
   };
 
   const printTableBill = (detail: TableDetail) => {
