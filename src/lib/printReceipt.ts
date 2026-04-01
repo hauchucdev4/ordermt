@@ -41,12 +41,15 @@ export function printReceipt(data: ReceiptData) {
     const COL_QTY_X = ML + CW * 0.55;   // ~43mm from left
     const COL_TOTAL_X = MR;              // right-aligned
 
-    // Pre-calculate page height
+    // Pre-calculate page height based on actual content
     const itemLines = data.items.length * 4;
     const addrH = data.restaurantAddress ? 7 : 0;
     const phoneH = data.restaurantPhone ? 4 : 0;
     const wifiH = data.wifiPassword ? 4 : 0;
-    const pageH = Math.max(65, 55 + itemLines + addrH + phoneH + wifiH);
+    // Base ~68mm covers: top double line(5) + name(5) + double line(5) + title(6) + 
+    // table info(4) + date(3.5) + dashed(3.5) + headers(3) + dashed(3.5) + 
+    // dashed before total(4) + total(3.5) + dashed(5) + footer(4) + double line bottom(3) + padding(10)
+    const pageH = Math.max(90, 68 + itemLines + addrH + phoneH + wifiH);
 
     const doc = new jsPDF({ unit: "mm", format: [W, pageH] });
     let y = 4;
