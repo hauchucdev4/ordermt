@@ -100,16 +100,14 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
     fetchOccupiedTables();
   };
 
-  const printBill = () => {
+  const previewBill = () => {
     if (!selectedBill) return;
-    import("@/lib/printReceipt").then(({ printReceipt }) => {
-      printReceipt({
-        restaurantName: restaurantName || "Nha hang",
-        tableName: selectedBill.table.name,
-        orderId: selectedBill.orderId,
-        items: selectedBill.items,
-        total: selectedBill.total,
-      });
+    setReceiptPreview({
+      restaurantName: restaurantName || "Nhà hàng",
+      tableName: selectedBill.table.name,
+      orderId: selectedBill.orderId,
+      items: selectedBill.items,
+      total: selectedBill.total,
     });
   };
 
