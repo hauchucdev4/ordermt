@@ -1,4 +1,4 @@
-import ExcelJS from "exceljs";
+import * as ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 interface TableDetail {
