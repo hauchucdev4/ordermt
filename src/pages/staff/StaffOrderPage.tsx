@@ -242,12 +242,12 @@ export default function StaffOrderPage() {
   return (
     <div className="p-4 md:p-6">
       <h1 className="text-xl font-bold mb-4">Chọn bàn</h1>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-2">
         {tables.map(table => (
-          <Card key={table.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => openTable(table)}>
-            <CardContent className="p-4 text-center">
-              <p className="font-bold text-lg">{table.name}</p>
-              <Badge className={table.status === "empty" ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-orange-500/20 text-orange-700 dark:text-orange-300"}>
+          <Card key={table.id} className="cursor-pointer hover:shadow-md transition-all aspect-square" onClick={() => openTable(table)}>
+            <CardContent className="p-2 h-full flex flex-col items-center justify-center gap-1">
+              <p className="font-bold text-lg leading-none">{table.name}</p>
+              <Badge className={`text-[10px] px-1.5 py-0 ${table.status === "empty" ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-orange-500/20 text-orange-700 dark:text-orange-300"}`}>
                 {table.status === "empty" ? "Trống" : "Có khách"}
               </Badge>
             </CardContent>
