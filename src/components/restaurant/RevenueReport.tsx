@@ -126,78 +126,18 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
   useEffect(() => { fetchReport(); }, [restaurantId, filter]);
 
   const exportExcel = async () => {
-    const XLSX = await import("xlsx");
-    const wb = XLSX.utils.book_new();
-
-    // Summary sheet
-    const filterLabel = filter === "custom" ? `${customStart} - ${customEnd}` : filters.find(f => f.value === filter)?.label || filter;
-    const summaryData = [
-      ["BAO CAO DOANH THU"],
-      [],
-      ["Nha hang", restaurantName],
-      ["Thoi gian", filterLabel],
-      ["Ngay xuat", new Date().toLocaleString("vi-VN")],
-      [],
-      ["CHI TIEU", "GIA TRI"],
-      ["Tong doanh thu (VND)", totalRevenue],
-      ["Tong so hoa don", totalOrders],
-      ["So ban phuc vu", totalTables],
-      ["Doanh thu trung binh/hoa don (VND)", totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0],
-    ];
-    const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-    ws1["!cols"] = [{ wch: 32 }, { wch: 28 }];
-    XLSX.utils.book_append_sheet(wb, ws1, "Tong quan");
-
-    // Detail sheet
-    const detailRows: any[][] = [
-      ["STT", "Ban", "Mon", "So luong", "Don gia (VND)", "Thanh tien (VND)", "Tong hoa don (VND)", "Ngay thanh toan"],
-    ];
-    let stt = 0;
-    tableDetails.forEach(td => {
-      stt++;
-      td.items.forEach((item, i) => {
-        detailRows.push([
-          i === 0 ? stt : "",
-          i === 0 ? td.tableName : "",
-          item.name,
-          item.quantity,
-          item.price,
-          item.quantity * item.price,
-          i === 0 ? td.total : "",
-          i === 0 ? new Date(td.paidAt).toLocaleString("vi-VN") : "",
-        ]);
-      });
+    const { exportRevenueExcel } = await import("@/lib/exportRevenueExcel");
+    const filterLabel = filter === "custom"
+      ? `${customStart} - ${customEnd}`
+      : filters.find(f => f.value === filter)?.label || filter;
+    await exportRevenueExcel({
+      restaurantName,
+      filterLabel,
+      totalRevenue,
+      totalOrders,
+      totalTables,
+      tableDetails,
     });
-    // Grand total row
-    detailRows.push([]);
-    detailRows.push(["", "", "", "", "", "TONG CONG:", totalRevenue, ""]);
-
-    const ws2 = XLSX.utils.aoa_to_sheet(detailRows);
-    ws2["!cols"] = [
-      { wch: 5 }, { wch: 12 }, { wch: 24 }, { wch: 9 },
-      { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 20 },
-    ];
-    XLSX.utils.book_append_sheet(wb, ws2, "Chi tiet");
-
-    // Daily summary sheet
-    const dailyRows: any[][] = [["Ngay", "So hoa don", "Doanh thu (VND)"]];
-    const dailyMap: Record<string, { count: number; revenue: number }> = {};
-    tableDetails.forEach(td => {
-      const day = new Date(td.paidAt).toLocaleDateString("vi-VN");
-      if (!dailyMap[day]) dailyMap[day] = { count: 0, revenue: 0 };
-      dailyMap[day].count++;
-      dailyMap[day].revenue += td.total;
-    });
-    Object.entries(dailyMap).forEach(([day, d]) => {
-      dailyRows.push([day, d.count, d.revenue]);
-    });
-    dailyRows.push([]);
-    dailyRows.push(["TONG CONG", totalOrders, totalRevenue]);
-    const ws3 = XLSX.utils.aoa_to_sheet(dailyRows);
-    ws3["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 18 }];
-    XLSX.utils.book_append_sheet(wb, ws3, "Theo ngay");
-
-    XLSX.writeFile(wb, `doanh-thu-${restaurantName}-${Date.now()}.xlsx`);
   };
 
   const exportPDF = async () => {
