@@ -193,8 +193,8 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
 
           {/* Actions */}
           <div className="border-t px-6 py-4 flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" className="flex-1" onClick={printBill} disabled={!selectedBill?.items.length}>
-              <FileText className="mr-2 h-4 w-4" /> Xuất hóa đơn PDF
+            <Button variant="outline" className="flex-1" onClick={previewBill} disabled={!selectedBill?.items.length}>
+              <Eye className="mr-2 h-4 w-4" /> Xem hóa đơn
             </Button>
             <Button className="flex-1" onClick={handlePay} disabled={paying || !selectedBill?.items.length}>
               {paying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -203,6 +203,12 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
           </div>
         </DialogContent>
       </Dialog>
+
+      <ReceiptPreview
+        data={receiptPreview}
+        open={!!receiptPreview}
+        onClose={() => setReceiptPreview(null)}
+      />
     </div>
   );
 }
