@@ -8,8 +8,9 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Receipt, CreditCard, FileText } from "lucide-react";
+import { Loader2, Receipt, CreditCard, Eye } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import ReceiptPreview, { type ReceiptData } from "./ReceiptPreview";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 
