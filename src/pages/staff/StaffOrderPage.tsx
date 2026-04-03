@@ -375,6 +375,13 @@ export default function StaffOrderPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <ReceiptPreview
+        data={receiptPreview}
+        open={!!receiptPreview}
+        onClose={() => { setReceiptPreview(null); setReceiptPayMode(false); }}
+        onPay={receiptPayMode ? handlePay : undefined}
+        paying={paying}
+      />
     </div>
   );
 }
