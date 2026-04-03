@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, X } from "lucide-react";
+import { Printer, Download, X, CreditCard, Loader2 } from "lucide-react";
 import { useRef } from "react";
 
 export interface ReceiptData {
@@ -22,10 +22,16 @@ export default function ReceiptPreview({
   data,
   open,
   onClose,
+  onPay,
+  paying,
+  showPaid,
 }: {
   data: ReceiptData | null;
   open: boolean;
   onClose: () => void;
+  onPay?: () => void;
+  paying?: boolean;
+  showPaid?: boolean;
 }) {
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -67,19 +73,19 @@ export default function ReceiptPreview({
             <Button size="sm" variant="outline" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-1" /> In
             </Button>
-            <Button size="sm" onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-1" /> Tải PDF
+            <Button size="sm" variant="outline" onClick={handleDownload}>
+              <Download className="h-4 w-4 mr-1" /> PDF
             </Button>
           </div>
         </div>
 
         {/* Receipt preview */}
-        <div className="px-4 py-4 overflow-y-auto max-h-[70vh]">
+        <div className="px-4 py-4 overflow-y-auto max-h-[60vh]">
           <div
             ref={receiptRef}
             className="receipt mx-auto bg-white text-black rounded shadow-sm border"
             style={{
-              width: "302px", /* ~80mm at 96dpi */
+              width: "302px",
               fontFamily: "'Courier New', monospace",
               fontSize: "12px",
               padding: "12px 10px",
@@ -175,6 +181,21 @@ export default function ReceiptPreview({
             {/* Double line bottom */}
             <div style={{ borderTop: "3px double #000", marginTop: 8 }} />
           </div>
+        </div>
+
+        {/* Bottom actions */}
+        <div className="border-t px-4 py-3 flex gap-2">
+          {showPaid && (
+            <div className="flex-1 flex items-center justify-center">
+              <span className="text-sm font-semibold text-green-600 dark:text-green-400">✓ ĐÃ THANH TOÁN</span>
+            </div>
+          )}
+          {onPay && !showPaid && (
+            <Button className="flex-1" onClick={onPay} disabled={paying}>
+              {paying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <CreditCard className="mr-2 h-4 w-4" /> Xác nhận thanh toán
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
