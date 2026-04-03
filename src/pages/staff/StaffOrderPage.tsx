@@ -362,11 +362,10 @@ export default function StaffOrderPage() {
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" className="flex-1" onClick={printBill}>
-                      <FileText className="mr-2 h-4 w-4" /> Xuất bill
+                    <Button variant="outline" className="flex-1" onClick={() => showBillPreview(false)}>
+                      <Eye className="mr-2 h-4 w-4" /> Xem bill
                     </Button>
-                    <Button className="flex-1" onClick={handlePay} disabled={paying}>
-                      {paying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button className="flex-1" onClick={() => showBillPreview(true)}>
                       <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
                     </Button>
                   </div>
