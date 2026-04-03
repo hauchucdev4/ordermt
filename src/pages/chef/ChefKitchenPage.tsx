@@ -95,37 +95,57 @@ export default function ChefKitchenPage() {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
-  const Column = ({ title, emoji, items: colItems, action, variant }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void; variant?: string }) => (
+  const ItemCard = ({ item, action }: { item: KitchenItem; action?: (item: KitchenItem) => void }) => (
+    <div className="aspect-square rounded-lg border bg-card p-1.5 flex flex-col items-center justify-center text-center gap-0.5 animate-fade-in">
+      <p className="font-medium text-xs leading-tight line-clamp-2">{item.menu_item_name}</p>
+      <p className="text-[10px] text-muted-foreground">x{item.quantity}</p>
+      <p className="text-[10px] text-muted-foreground">{item.table_name}</p>
+      {action && (
+        <Button size="sm" variant={item.status === "new" ? "default" : "outline"} className="h-6 text-[10px] px-2 mt-0.5" onClick={() => action(item)}>
+          {item.status === "new" ? "Nhận" : "Xong"}
+        </Button>
+      )}
+    </div>
+  );
+
+  const ItemRow = ({ item, action }: { item: KitchenItem; action?: (item: KitchenItem) => void }) => (
+    <div className="flex items-center gap-2 rounded-lg border bg-card p-2 text-sm animate-fade-in">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium truncate">{item.menu_item_name}</span>
+          <span className="text-muted-foreground shrink-0">x{item.quantity}</span>
+        </div>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span>{item.table_name}</span>
+          <span>•</span>
+          <span>{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
+        </div>
+        {item.note && <p className="text-[11px] text-muted-foreground italic truncate">{item.note}</p>}
+      </div>
+      {action && (
+        <Button size="sm" variant={item.status === "new" ? "default" : "outline"} className="shrink-0 h-7 text-xs px-2" onClick={() => action(item)}>
+          {item.status === "new" ? "Nhận" : "Xong"}
+        </Button>
+      )}
+    </div>
+  );
+
+  const Column = ({ title, emoji, items: colItems, action }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void }) => (
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-2 px-1">
         <span className="text-sm">{emoji}</span>
         <span className="text-sm font-semibold">{title}</span>
         <Badge variant="secondary" className="text-[10px] h-5 px-1.5 ml-auto">{colItems.length}</Badge>
       </div>
-      <div className="space-y-1.5 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
-        {colItems.map(item => (
-          <div key={item.id} className="flex items-center gap-2 rounded-lg border bg-card p-2 text-sm animate-fade-in">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium truncate">{item.menu_item_name}</span>
-                <span className="text-muted-foreground shrink-0">x{item.quantity}</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>{item.table_name}</span>
-                <span>•</span>
-                <span>{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
-              </div>
-              {item.note && <p className="text-[11px] text-muted-foreground italic truncate">{item.note}</p>}
-            </div>
-            {action && (
-              <Button size="sm" variant={item.status === "new" ? "default" : "outline"} className="shrink-0 h-7 text-xs px-2" onClick={() => action(item)}>
-                {item.status === "new" ? "Nhận" : "Xong"}
-              </Button>
-            )}
-          </div>
-        ))}
-        {colItems.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">Trống</p>}
+      {/* Mobile: grid ô vuông */}
+      <div className="grid grid-cols-3 gap-1.5 lg:hidden max-h-[calc(100vh-120px)] overflow-y-auto">
+        {colItems.map(item => <ItemCard key={item.id} item={item} action={action} />)}
       </div>
+      {/* Desktop: danh sách dọc */}
+      <div className="hidden lg:block space-y-1.5 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
+        {colItems.map(item => <ItemRow key={item.id} item={item} action={action} />)}
+      </div>
+      {colItems.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">Trống</p>}
     </div>
   );
 
