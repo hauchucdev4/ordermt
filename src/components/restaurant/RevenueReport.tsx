@@ -12,8 +12,9 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, DollarSign, ShoppingCart, LayoutGrid, FileSpreadsheet, FileText, Receipt } from "lucide-react";
+import { Loader2, DollarSign, ShoppingCart, LayoutGrid, FileSpreadsheet, FileText, Receipt, Eye } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import ReceiptPreview, { type ReceiptData } from "./ReceiptPreview";
 
 type TimeFilter = "today" | "week" | "month" | "year" | "custom";
 
