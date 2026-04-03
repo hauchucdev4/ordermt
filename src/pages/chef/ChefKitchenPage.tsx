@@ -95,41 +95,44 @@ export default function ChefKitchenPage() {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
-  const Column = ({ title, emoji, items: colItems, action }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void }) => (
-    <div className="flex-1 min-w-[280px]">
-      <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-        <span>{emoji}</span> {title}
-        <Badge variant="secondary" className="ml-auto">{colItems.length}</Badge>
-      </h2>
-      <div className="space-y-3">
+  const Column = ({ title, emoji, items: colItems, action, variant }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void; variant?: string }) => (
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-2 mb-2 px-1">
+        <span className="text-sm">{emoji}</span>
+        <span className="text-sm font-semibold">{title}</span>
+        <Badge variant="secondary" className="text-[10px] h-5 px-1.5 ml-auto">{colItems.length}</Badge>
+      </div>
+      <div className="space-y-1.5 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
         {colItems.map(item => (
-          <Card key={item.id} className="animate-fade-in">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-semibold">{item.menu_item_name}</p>
-                  <p className="text-sm text-muted-foreground">{item.table_name} • x{item.quantity}</p>
-                  {item.note && <p className="text-xs text-muted-foreground italic mt-1">{item.note}</p>}
-                  <p className="text-xs text-muted-foreground mt-1">{new Date(item.created_at).toLocaleTimeString("vi-VN")}</p>
-                </div>
-                {action && (
-                  <Button size="sm" onClick={() => action(item)}>
-                    {item.status === "new" ? "Nhận món" : "Đã xong"}
-                  </Button>
-                )}
+          <div key={item.id} className="flex items-center gap-2 rounded-lg border bg-card p-2 text-sm animate-fade-in">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium truncate">{item.menu_item_name}</span>
+                <span className="text-muted-foreground shrink-0">x{item.quantity}</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>{item.table_name}</span>
+                <span>•</span>
+                <span>{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
+              </div>
+              {item.note && <p className="text-[11px] text-muted-foreground italic truncate">{item.note}</p>}
+            </div>
+            {action && (
+              <Button size="sm" variant={item.status === "new" ? "default" : "outline"} className="shrink-0 h-7 text-xs px-2" onClick={() => action(item)}>
+                {item.status === "new" ? "Nhận" : "Xong"}
+              </Button>
+            )}
+          </div>
         ))}
-        {colItems.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Trống</p>}
+        {colItems.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">Trống</p>}
       </div>
     </div>
   );
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="flex flex-col lg:flex-row gap-6">
-        <Column title="Món Mới" emoji="🆕" items={newItems} action={(item) => updateStatus(item.id, "preparing")} />
+    <div className="p-2 md:p-4">
+      <div className="flex flex-col lg:flex-row gap-4">
+        <Column title="Món mới" emoji="🆕" items={newItems} action={(item) => updateStatus(item.id, "preparing")} />
         <Column title="Đang làm" emoji="🍳" items={preparingItems} action={(item) => updateStatus(item.id, "done")} />
         <Column title="Hoàn thành" emoji="✅" items={doneItems} />
       </div>
