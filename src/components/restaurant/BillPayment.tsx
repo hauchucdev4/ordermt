@@ -209,7 +209,9 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
       <ReceiptPreview
         data={receiptPreview}
         open={!!receiptPreview}
-        onClose={() => setReceiptPreview(null)}
+        onClose={() => { setReceiptPreview(null); setReceiptPayMode(false); }}
+        onPay={receiptPayMode ? handlePay : undefined}
+        paying={paying}
       />
     </div>
   );
