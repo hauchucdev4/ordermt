@@ -209,25 +209,32 @@ export default function StaffOrderPage() {
     await supabase.from("tables").update({ status: "empty" as const }).eq("id", selectedTable.id);
     toast({ title: "Thanh toán thành công", description: `${selectedTable.name} - ${orderTotal.toLocaleString("vi-VN")}₫` });
     setPaying(false);
+    setReceiptPreview(null);
+    setReceiptPayMode(false);
     setSelectedTable(null);
     fetchTables();
   };
 
-  const printBill = () => {
-    if (!selectedTable || orderItems.length === 0) return;
-    import("@/lib/printReceipt").then(({ printReceipt }) => {
-      const billItems = orderItems.map(i => ({
+  const buildReceiptData = (): ReceiptData | null => {
+    if (!selectedTable || orderItems.length === 0) return null;
+    return {
+      restaurantName: restaurantName || "Nhà hàng",
+      tableName: selectedTable.name,
+      orderId: orderId || undefined,
+      items: orderItems.map(i => ({
         name: i.menu_items?.name || "?",
         quantity: i.quantity,
         price: Number(i.menu_items?.price || 0),
-      }));
-      printReceipt({
-        restaurantName: restaurantName || "Nha hang",
-        tableName: selectedTable.name,
-        items: billItems,
-        total: orderTotal,
-      });
-    });
+      })),
+      total: orderTotal,
+    };
+  };
+
+  const showBillPreview = (payMode: boolean) => {
+    const data = buildReceiptData();
+    if (!data) return;
+    setReceiptPayMode(payMode);
+    setReceiptPreview(data);
   };
 
   const statusLabel: Record<string, { label: string; color: string }> = {
