@@ -12,8 +12,9 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, DollarSign, ShoppingCart, LayoutGrid, FileSpreadsheet, FileText, Receipt } from "lucide-react";
+import { Loader2, DollarSign, ShoppingCart, LayoutGrid, FileSpreadsheet, FileText, Receipt, Eye } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import ReceiptPreview, { type ReceiptData } from "./ReceiptPreview";
 
 type TimeFilter = "today" | "week" | "month" | "year" | "custom";
 
@@ -37,6 +38,7 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
   const [customEnd, setCustomEnd] = useState("");
   const [selectedBill, setSelectedBill] = useState<TableDetail | null>(null);
   const [restaurantName, setRestaurantName] = useState("");
+  const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
 
   const getDateRange = (f: TimeFilter) => {
     const now = new Date();
@@ -155,15 +157,13 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     });
   };
 
-  const printTableBill = (detail: TableDetail) => {
-    import("@/lib/printReceipt").then(({ printReceipt }) => {
-      printReceipt({
-        restaurantName: restaurantName || "Nha hang",
-        tableName: detail.tableName,
-        orderId: detail.orderId,
-        items: detail.items,
-        total: detail.total,
-      });
+  const viewTableBill = (detail: TableDetail) => {
+    setReceiptPreview({
+      restaurantName: restaurantName || "Nhà hàng",
+      tableName: detail.tableName,
+      orderId: detail.orderId,
+      items: detail.items,
+      total: detail.total,
     });
   };
 
@@ -279,7 +279,7 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
                 </TableHeader>
                 <TableBody>
                   {tableDetails.map((td) => (
-                    <TableRow key={td.orderId} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedBill(td)}>
+                    <TableRow key={td.orderId} className="cursor-pointer hover:bg-muted/50" onClick={() => viewTableBill(td)}>
                       <TableCell className="font-medium">{td.tableName}</TableCell>
                       <TableCell>
                         <div className="text-sm space-y-0.5">
@@ -292,8 +292,8 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
                       <TableCell className="text-right font-semibold">{td.total.toLocaleString("vi-VN")}₫</TableCell>
                       <TableCell className="text-sm">{new Date(td.paidAt).toLocaleString("vi-VN")}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); printTableBill(td); }}>
-                          <Receipt className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); viewTableBill(td); }}>
+                          <Eye className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -305,60 +305,12 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
         </Card>
       )}
 
-      {/* Bill preview dialog */}
-      <Dialog open={!!selectedBill} onOpenChange={open => !open && setSelectedBill(null)}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden">
-          <div className="bg-primary/5 border-b px-6 py-4">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg">
-                <Receipt className="h-5 w-5 text-primary" /> Hóa đơn - {selectedBill?.tableName}
-              </DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {restaurantName && <span className="font-medium">{restaurantName} • </span>}
-                {selectedBill && new Date(selectedBill.paidAt).toLocaleString("vi-VN")}
-              </p>
-            </DialogHeader>
-          </div>
-          {selectedBill && (
-            <div className="px-6 py-4 space-y-4">
-              <div className="rounded-lg border overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/50 text-muted-foreground">
-                      <th className="text-left py-2 px-3 font-medium">Món</th>
-                      <th className="text-center py-2 px-3 font-medium w-12">SL</th>
-                      <th className="text-right py-2 px-3 font-medium w-24">Đơn giá</th>
-                      <th className="text-right py-2 px-3 font-medium w-28">Thành tiền</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedBill.items.map((item, idx) => (
-                      <tr key={idx} className="border-t">
-                        <td className="py-2 px-3">{item.name}</td>
-                        <td className="py-2 px-3 text-center">{item.quantity}</td>
-                        <td className="py-2 px-3 text-right text-muted-foreground">{item.price.toLocaleString("vi-VN")}₫</td>
-                        <td className="py-2 px-3 text-right font-medium">{(item.quantity * item.price).toLocaleString("vi-VN")}₫</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex justify-between items-center bg-primary/5 rounded-lg p-4">
-                <span className="font-semibold text-lg">Tổng cộng</span>
-                <span className="text-primary font-bold text-xl">{selectedBill.total.toLocaleString("vi-VN")}₫</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">ĐÃ THANH TOÁN</Badge>
-              </div>
-            </div>
-          )}
-          <div className="border-t px-6 py-4">
-            <Button variant="outline" className="w-full" onClick={() => selectedBill && printTableBill(selectedBill)}>
-              <FileText className="mr-2 h-4 w-4" /> Xuất hóa đơn PDF
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ReceiptPreview
+        data={receiptPreview}
+        open={!!receiptPreview}
+        onClose={() => setReceiptPreview(null)}
+        showPaid
+      />
     </div>
   );
 }

@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText } from "lucide-react";
+import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText, Eye } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import ReceiptPreview, { type ReceiptData } from "@/components/restaurant/ReceiptPreview";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
@@ -34,6 +35,8 @@ export default function StaffOrderPage() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [paying, setPaying] = useState(false);
   const [restaurantName, setRestaurantName] = useState("");
+  const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
+  const [receiptPayMode, setReceiptPayMode] = useState(false);
   const audioRef = useRef<AudioContext | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
@@ -206,25 +209,32 @@ export default function StaffOrderPage() {
     await supabase.from("tables").update({ status: "empty" as const }).eq("id", selectedTable.id);
     toast({ title: "Thanh toán thành công", description: `${selectedTable.name} - ${orderTotal.toLocaleString("vi-VN")}₫` });
     setPaying(false);
+    setReceiptPreview(null);
+    setReceiptPayMode(false);
     setSelectedTable(null);
     fetchTables();
   };
 
-  const printBill = () => {
-    if (!selectedTable || orderItems.length === 0) return;
-    import("@/lib/printReceipt").then(({ printReceipt }) => {
-      const billItems = orderItems.map(i => ({
+  const buildReceiptData = (): ReceiptData | null => {
+    if (!selectedTable || orderItems.length === 0) return null;
+    return {
+      restaurantName: restaurantName || "Nhà hàng",
+      tableName: selectedTable.name,
+      orderId: orderId || undefined,
+      items: orderItems.map(i => ({
         name: i.menu_items?.name || "?",
         quantity: i.quantity,
         price: Number(i.menu_items?.price || 0),
-      }));
-      printReceipt({
-        restaurantName: restaurantName || "Nha hang",
-        tableName: selectedTable.name,
-        items: billItems,
-        total: orderTotal,
-      });
-    });
+      })),
+      total: orderTotal,
+    };
+  };
+
+  const showBillPreview = (payMode: boolean) => {
+    const data = buildReceiptData();
+    if (!data) return;
+    setReceiptPayMode(payMode);
+    setReceiptPreview(data);
   };
 
   const statusLabel: Record<string, { label: string; color: string }> = {
@@ -352,11 +362,10 @@ export default function StaffOrderPage() {
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" className="flex-1" onClick={printBill}>
-                      <FileText className="mr-2 h-4 w-4" /> Xuất bill
+                    <Button variant="outline" className="flex-1" onClick={() => showBillPreview(false)}>
+                      <Eye className="mr-2 h-4 w-4" /> Xem bill
                     </Button>
-                    <Button className="flex-1" onClick={handlePay} disabled={paying}>
-                      {paying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button className="flex-1" onClick={() => showBillPreview(true)}>
                       <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
                     </Button>
                   </div>
@@ -366,6 +375,13 @@ export default function StaffOrderPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <ReceiptPreview
+        data={receiptPreview}
+        open={!!receiptPreview}
+        onClose={() => { setReceiptPreview(null); setReceiptPayMode(false); }}
+        onPay={receiptPayMode ? handlePay : undefined}
+        paying={paying}
+      />
     </div>
   );
 }
