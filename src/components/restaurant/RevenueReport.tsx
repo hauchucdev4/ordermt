@@ -157,15 +157,13 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     });
   };
 
-  const printTableBill = (detail: TableDetail) => {
-    import("@/lib/printReceipt").then(({ printReceipt }) => {
-      printReceipt({
-        restaurantName: restaurantName || "Nha hang",
-        tableName: detail.tableName,
-        orderId: detail.orderId,
-        items: detail.items,
-        total: detail.total,
-      });
+  const viewTableBill = (detail: TableDetail) => {
+    setReceiptPreview({
+      restaurantName: restaurantName || "Nhà hàng",
+      tableName: detail.tableName,
+      orderId: detail.orderId,
+      items: detail.items,
+      total: detail.total,
     });
   };
 
