@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText } from "lucide-react";
+import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText, Eye } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import ReceiptPreview, { type ReceiptData } from "@/components/restaurant/ReceiptPreview";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
