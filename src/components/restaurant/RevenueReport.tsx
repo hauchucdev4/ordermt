@@ -279,7 +279,7 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
                 </TableHeader>
                 <TableBody>
                   {tableDetails.map((td) => (
-                    <TableRow key={td.orderId} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedBill(td)}>
+                    <TableRow key={td.orderId} className="cursor-pointer hover:bg-muted/50" onClick={() => viewTableBill(td)}>
                       <TableCell className="font-medium">{td.tableName}</TableCell>
                       <TableCell>
                         <div className="text-sm space-y-0.5">
@@ -292,8 +292,8 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
                       <TableCell className="text-right font-semibold">{td.total.toLocaleString("vi-VN")}₫</TableCell>
                       <TableCell className="text-sm">{new Date(td.paidAt).toLocaleString("vi-VN")}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); printTableBill(td); }}>
-                          <Receipt className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); viewTableBill(td); }}>
+                          <Eye className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
