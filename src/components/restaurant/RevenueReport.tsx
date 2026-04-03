@@ -38,6 +38,7 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
   const [customEnd, setCustomEnd] = useState("");
   const [selectedBill, setSelectedBill] = useState<TableDetail | null>(null);
   const [restaurantName, setRestaurantName] = useState("");
+  const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
 
   const getDateRange = (f: TimeFilter) => {
     const now = new Date();
