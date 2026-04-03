@@ -24,6 +24,7 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
   const [selectedBill, setSelectedBill] = useState<TableBill | null>(null);
   const [paying, setPaying] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
+  const [receiptPayMode, setReceiptPayMode] = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const fetchOccupiedTables = useCallback(async () => {
