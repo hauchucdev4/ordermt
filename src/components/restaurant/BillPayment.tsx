@@ -97,11 +97,13 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
     toast({ title: "Thanh toán thành công", description: `${selectedBill.table.name} - ${selectedBill.total.toLocaleString("vi-VN")}₫` });
     setPaying(false);
     setSelectedBill(null);
+    setReceiptPreview(null);
     fetchOccupiedTables();
   };
 
-  const previewBill = () => {
+  const showBillPreview = (payMode: boolean) => {
     if (!selectedBill) return;
+    setReceiptPayMode(payMode);
     setReceiptPreview({
       restaurantName: restaurantName || "Nhà hàng",
       tableName: selectedBill.table.name,
