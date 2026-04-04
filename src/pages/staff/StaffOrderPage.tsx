@@ -144,6 +144,7 @@ export default function StaffOrderPage() {
     setSelectedTable(table);
     setCart({});
     setNotes({});
+    setMenuSearch("");
   };
 
   const addToCart = (menuId: string, delta: number) => {
