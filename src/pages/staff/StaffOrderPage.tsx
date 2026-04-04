@@ -295,7 +295,7 @@ export default function StaffOrderPage() {
                   <div key={cat}>
                     <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
                     <div className="space-y-1.5">
-                      {menuItems.filter(m => m.category === cat).map(item => (
+                      {filteredMenu.filter(m => m.category === cat).map(item => (
                         <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border">
                           <div className="flex items-center gap-2">
                             {item.image_url && <img src={item.image_url} alt={item.name} className="h-9 w-9 rounded object-cover" />}
