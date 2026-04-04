@@ -245,7 +245,10 @@ export default function StaffOrderPage() {
     done: { label: "Hoàn thành", color: "bg-green-500/20 text-green-700 dark:text-green-300" },
   };
 
-  const categories = [...new Set(menuItems.map(m => m.category))];
+  const filteredMenu = menuSearch.trim()
+    ? menuItems.filter(m => m.name.toLowerCase().includes(menuSearch.trim().toLowerCase()))
+    : menuItems;
+  const categories = [...new Set(filteredMenu.map(m => m.category))];
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
