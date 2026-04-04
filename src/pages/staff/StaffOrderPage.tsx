@@ -38,6 +38,23 @@ export default function StaffOrderPage() {
   const [restaurantName, setRestaurantName] = useState("");
   const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
   const [receiptPayMode, setReceiptPayMode] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"menu" | "order">("menu");
+  const audioRef = useRef<AudioContext | null>(null);
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const [tables, setTables] = useState<TableRow[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTable, setSelectedTable] = useState<TableRow | null>(null);
+  const [orderItems, setOrderItems] = useState<OrderItemWithMenu[]>([]);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [menuSearch, setMenuSearch] = useState("");
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [paying, setPaying] = useState(false);
+  const [restaurantName, setRestaurantName] = useState("");
+  const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
+  const [receiptPayMode, setReceiptPayMode] = useState(false);
   const audioRef = useRef<AudioContext | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
