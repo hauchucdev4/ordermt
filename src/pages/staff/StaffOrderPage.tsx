@@ -283,7 +283,14 @@ export default function StaffOrderPage() {
             {/* LEFT: Menu + sticky cart */}
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+                <div className="relative mb-2">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Tìm món..." value={menuSearch} onChange={e => setMenuSearch(e.target.value)} className="pl-8 h-9 text-sm" />
+                </div>
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Thực đơn</h3>
+                {categories.length === 0 && menuSearch && (
+                  <p className="text-sm text-muted-foreground py-4 text-center">Không tìm thấy món "{menuSearch}"</p>
+                )}
                 {categories.map(cat => (
                   <div key={cat}>
                     <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
