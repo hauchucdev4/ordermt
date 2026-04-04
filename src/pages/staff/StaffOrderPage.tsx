@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText, Eye, Search } from "lucide-react";
+import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText, Eye, Search, UtensilsCrossed, ClipboardList } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ReceiptPreview, { type ReceiptData } from "@/components/restaurant/ReceiptPreview";
 
