@@ -303,7 +303,19 @@ export default function StaffOrderPage() {
             </button>
           </div>
 
-          <div className="flex flex-col md:flex-row md:divide-x divide-border overflow-hidden" style={{ maxHeight: "calc(90vh - 120px)" }}>
+          <div
+            className="flex flex-col md:flex-row md:divide-x divide-border overflow-hidden"
+            style={{ maxHeight: "calc(90vh - 120px)" }}
+            onTouchStart={(e) => { (e.currentTarget as any)._touchX = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              const startX = (e.currentTarget as any)._touchX;
+              if (startX == null) return;
+              const diff = e.changedTouches[0].clientX - startX;
+              if (Math.abs(diff) > 50) {
+                setMobileTab(diff > 0 ? "menu" : "order");
+              }
+            }}
+          >
             {/* LEFT: Menu + sticky cart - hidden on mobile when order tab active */}
             <div className={`flex-1 flex flex-col overflow-hidden ${mobileTab === "order" ? "hidden md:flex" : "flex"}`}>
               <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-3">
