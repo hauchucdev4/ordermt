@@ -304,121 +304,223 @@ export default function StaffOrderPage() {
           </div>
 
           <div
-            className="flex flex-col md:flex-row md:divide-x divide-border overflow-hidden"
+            className="overflow-hidden md:overflow-visible"
             style={{ maxHeight: "calc(90vh - 120px)" }}
-            onTouchStart={(e) => { (e.currentTarget as any)._touchX = e.touches[0].clientX; }}
-            onTouchEnd={(e) => {
-              const startX = (e.currentTarget as any)._touchX;
-              if (startX == null) return;
-              const diff = e.changedTouches[0].clientX - startX;
-              if (Math.abs(diff) > 50) {
-                setMobileTab(diff > 0 ? "menu" : "order");
-              }
-            }}
           >
-            {/* LEFT: Menu + sticky cart - hidden on mobile when order tab active */}
-            <div className={`flex-1 flex flex-col overflow-hidden ${mobileTab === "order" ? "hidden md:flex" : "flex"}`}>
-              <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Tìm món..." value={menuSearch} onChange={e => setMenuSearch(e.target.value)} className="pl-8 h-8 text-sm" />
-                </div>
-                {categories.length === 0 && menuSearch && (
-                  <p className="text-sm text-muted-foreground py-4 text-center">Không tìm thấy món "{menuSearch}"</p>
-                )}
-                {categories.map(cat => (
-                  <div key={cat}>
-                    <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
-                    <div className="space-y-1">
-                      {filteredMenu.filter(m => m.category === cat).map(item => (
-                        <div key={item.id} className="flex items-center justify-between p-1.5 md:p-2 rounded-lg border">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            {item.image_url && <img src={item.image_url} alt={item.name} className="h-8 w-8 md:h-9 md:w-9 rounded object-cover shrink-0" />}
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">{item.name}</p>
-                              <p className="text-xs text-muted-foreground">{item.price.toLocaleString("vi-VN")}đ</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-0.5 shrink-0">
-                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, -1)}><Minus className="h-3 w-3" /></Button>
-                            <span className={`w-5 text-center text-sm font-bold ${cart[item.id] ? "text-primary" : "text-muted-foreground"}`}>{cart[item.id] || 0}</span>
-                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, 1)}><Plus className="h-3 w-3" /></Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+            {/* Mobile: sliding panels */}
+            <div
+              className="flex md:hidden transition-transform duration-300 ease-in-out"
+              style={{ width: "200%", transform: mobileTab === "order" ? "translateX(-50%)" : "translateX(0)" }}
+              onTouchStart={(e) => { (e.currentTarget as any)._touchX = e.touches[0].clientX; }}
+              onTouchEnd={(e) => {
+                const startX = (e.currentTarget as any)._touchX;
+                if (startX == null) return;
+                const diff = e.changedTouches[0].clientX - startX;
+                if (Math.abs(diff) > 50) {
+                  setMobileTab(diff > 0 ? "menu" : "order");
+                }
+              }}
+            >
+              {/* Panel 1: Menu */}
+              <div className="w-1/2 flex flex-col overflow-hidden" style={{ maxHeight: "calc(90vh - 120px)" }}>
+                <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Tìm món..." value={menuSearch} onChange={e => setMenuSearch(e.target.value)} className="pl-8 h-8 text-sm" />
                   </div>
-                ))}
-              </div>
-
-              {/* Sticky bottom cart */}
-              {Object.keys(cart).length > 0 && (
-                <div className="border-t bg-muted/50 p-3 space-y-1.5 shrink-0 max-h-[35%] overflow-y-auto">
-                  <h4 className="font-semibold text-xs">Ghi chú ({Object.values(cart).reduce((a, b) => a + b, 0)} món)</h4>
-                  {Object.entries(cart).map(([menuId, qty]) => {
-                    const item = menuItems.find(m => m.id === menuId);
-                    return (
-                      <div key={menuId} className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium shrink-0 truncate max-w-[120px]">{item?.name}</span>
-                        <Badge variant="secondary" className="text-[10px] px-1 shrink-0">x{qty}</Badge>
-                        <Input placeholder="Ghi chú..." value={notes[menuId] || ""} onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))} className="h-6 text-xs flex-1" />
-                      </div>
-                    );
-                  })}
-                  <Button className="w-full h-8 text-sm" onClick={submitOrder}><Send className="mr-1.5 h-3.5 w-3.5" /> Đặt món ({Object.values(cart).reduce((a, b) => a + b, 0)})</Button>
-                </div>
-              )}
-            </div>
-
-            {/* RIGHT: Current order + payment - hidden on mobile when menu tab active */}
-            <div className={`flex-1 overflow-y-auto p-3 md:p-6 space-y-3 ${mobileTab === "menu" ? "hidden md:block" : "block"}`}>
-              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider hidden md:block">Order hiện tại</h3>
-              {orderItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4">Chưa có món nào</p>
-              ) : (
-                <>
-                  {(["new", "preparing", "done"] as const).map(status => {
-                    const group = orderItems.filter(i => i.status === status);
-                    if (group.length === 0) return null;
-                    const info = statusLabel[status];
-                    return (
-                      <div key={status} className="mb-1.5">
-                        <Badge className={`${info.color} mb-1 text-[10px]`}>{info.label}</Badge>
-                        {group.map(item => (
-                          <div key={item.id} className="flex items-center justify-between py-0.5 text-sm">
-                            <div className="flex-1 min-w-0">
-                              <span>{item.menu_items?.name}</span>
-                              <span className="text-muted-foreground"> x{item.quantity}</span>
-                              <span className="text-muted-foreground ml-1.5">{((item.menu_items?.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</span>
-                              {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+                  {categories.length === 0 && menuSearch && (
+                    <p className="text-sm text-muted-foreground py-4 text-center">Không tìm thấy món "{menuSearch}"</p>
+                  )}
+                  {categories.map(cat => (
+                    <div key={cat}>
+                      <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
+                      <div className="space-y-1">
+                        {filteredMenu.filter(m => m.category === cat).map(item => (
+                          <div key={item.id} className="flex items-center justify-between p-1.5 rounded-lg border">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              {item.image_url && <img src={item.image_url} alt={item.name} className="h-8 w-8 rounded object-cover shrink-0" />}
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm truncate">{item.name}</p>
+                                <p className="text-xs text-muted-foreground">{item.price.toLocaleString("vi-VN")}đ</p>
+                              </div>
                             </div>
-                            {(status === "new" || canDeleteAll) ? (
-                              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                            ) : (
-                              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-30 cursor-not-allowed" disabled><Trash2 className="h-3 w-3" /></Button>
-                            )}
+                            <div className="flex items-center gap-0.5 shrink-0">
+                              <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, -1)}><Minus className="h-3 w-3" /></Button>
+                              <span className={`w-5 text-center text-sm font-bold ${cart[item.id] ? "text-primary" : "text-muted-foreground"}`}>{cart[item.id] || 0}</span>
+                              <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, 1)}><Plus className="h-3 w-3" /></Button>
+                            </div>
                           </div>
                         ))}
                       </div>
-                    );
-                  })}
-
-                  <Separator />
-                  <div className="flex justify-between font-bold text-base md:text-lg">
-                    <span>Tổng cộng</span>
-                    <span className="text-primary">{orderTotal.toLocaleString("vi-VN")}₫</span>
+                    </div>
+                  ))}
+                </div>
+                {Object.keys(cart).length > 0 && (
+                  <div className="border-t bg-muted/50 p-3 space-y-1.5 shrink-0 max-h-[35%] overflow-y-auto">
+                    <h4 className="font-semibold text-xs">Ghi chú ({Object.values(cart).reduce((a, b) => a + b, 0)} món)</h4>
+                    {Object.entries(cart).map(([menuId, qty]) => {
+                      const item = menuItems.find(m => m.id === menuId);
+                      return (
+                        <div key={menuId} className="flex items-center gap-1.5">
+                          <span className="text-xs font-medium shrink-0 truncate max-w-[120px]">{item?.name}</span>
+                          <Badge variant="secondary" className="text-[10px] px-1 shrink-0">x{qty}</Badge>
+                          <Input placeholder="Ghi chú..." value={notes[menuId] || ""} onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))} className="h-6 text-xs flex-1" />
+                        </div>
+                      );
+                    })}
+                    <Button className="w-full h-8 text-sm" onClick={submitOrder}><Send className="mr-1.5 h-3.5 w-3.5" /> Đặt món ({Object.values(cart).reduce((a, b) => a + b, 0)})</Button>
                   </div>
+                )}
+              </div>
 
-                  <div className="flex gap-2 pt-1">
-                    <Button variant="outline" className="flex-1 h-9" onClick={() => showBillPreview(false)}>
-                      <Eye className="mr-1.5 h-4 w-4" /> Xem bill
-                    </Button>
-                    <Button className="flex-1 h-9" onClick={() => showBillPreview(true)}>
-                      <CreditCard className="mr-1.5 h-4 w-4" /> Thanh toán
-                    </Button>
+              {/* Panel 2: Order */}
+              <div className="w-1/2 overflow-y-auto p-3 space-y-3" style={{ maxHeight: "calc(90vh - 120px)" }}>
+                {orderItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">Chưa có món nào</p>
+                ) : (
+                  <>
+                    {(["new", "preparing", "done"] as const).map(status => {
+                      const group = orderItems.filter(i => i.status === status);
+                      if (group.length === 0) return null;
+                      const info = statusLabel[status];
+                      return (
+                        <div key={status} className="mb-1.5">
+                          <Badge className={`${info.color} mb-1 text-[10px]`}>{info.label}</Badge>
+                          {group.map(item => (
+                            <div key={item.id} className="flex items-center justify-between py-0.5 text-sm">
+                              <div className="flex-1 min-w-0">
+                                <span>{item.menu_items?.name}</span>
+                                <span className="text-muted-foreground"> x{item.quantity}</span>
+                                <span className="text-muted-foreground ml-1.5">{((item.menu_items?.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</span>
+                                {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+                              </div>
+                              {(status === "new" || canDeleteAll) ? (
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                              ) : (
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-30 cursor-not-allowed" disabled><Trash2 className="h-3 w-3" /></Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    <Separator />
+                    <div className="flex justify-between font-bold text-base">
+                      <span>Tổng cộng</span>
+                      <span className="text-primary">{orderTotal.toLocaleString("vi-VN")}₫</span>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button variant="outline" className="flex-1 h-9" onClick={() => showBillPreview(false)}>
+                        <Eye className="mr-1.5 h-4 w-4" /> Xem bill
+                      </Button>
+                      <Button className="flex-1 h-9" onClick={() => showBillPreview(true)}>
+                        <CreditCard className="mr-1.5 h-4 w-4" /> Thanh toán
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop: side-by-side */}
+            <div className="hidden md:flex md:divide-x divide-border" style={{ maxHeight: "calc(90vh - 120px)" }}>
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Tìm món..." value={menuSearch} onChange={e => setMenuSearch(e.target.value)} className="pl-8 h-9 text-sm" />
                   </div>
-                </>
-              )}
+                  {categories.length === 0 && menuSearch && (
+                    <p className="text-sm text-muted-foreground py-4 text-center">Không tìm thấy món "{menuSearch}"</p>
+                  )}
+                  {categories.map(cat => (
+                    <div key={cat}>
+                      <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
+                      <div className="space-y-1.5">
+                        {filteredMenu.filter(m => m.category === cat).map(item => (
+                          <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              {item.image_url && <img src={item.image_url} alt={item.name} className="h-9 w-9 rounded object-cover shrink-0" />}
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm truncate">{item.name}</p>
+                                <p className="text-xs text-muted-foreground">{item.price.toLocaleString("vi-VN")}đ</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, -1)}><Minus className="h-3 w-3" /></Button>
+                              <span className={`w-6 text-center text-sm font-bold ${cart[item.id] ? "text-primary" : "text-muted-foreground"}`}>{cart[item.id] || 0}</span>
+                              <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => addToCart(item.id, 1)}><Plus className="h-3 w-3" /></Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {Object.keys(cart).length > 0 && (
+                  <div className="border-t bg-muted/50 p-4 space-y-2 shrink-0 max-h-[35%] overflow-y-auto">
+                    <h4 className="font-semibold text-sm">Ghi chú ({Object.values(cart).reduce((a, b) => a + b, 0)} món)</h4>
+                    {Object.entries(cart).map(([menuId, qty]) => {
+                      const item = menuItems.find(m => m.id === menuId);
+                      return (
+                        <div key={menuId} className="flex items-center gap-2">
+                          <span className="text-sm font-medium shrink-0">{item?.name} <Badge variant="secondary" className="ml-1">x{qty}</Badge></span>
+                          <Input placeholder="Ghi chú..." value={notes[menuId] || ""} onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))} className="h-7 text-xs flex-1" />
+                        </div>
+                      );
+                    })}
+                    <Button className="w-full" onClick={submitOrder}><Send className="mr-2 h-4 w-4" /> Đặt món ({Object.values(cart).reduce((a, b) => a + b, 0)})</Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Order hiện tại</h3>
+                {orderItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">Chưa có món nào</p>
+                ) : (
+                  <>
+                    {(["new", "preparing", "done"] as const).map(status => {
+                      const group = orderItems.filter(i => i.status === status);
+                      if (group.length === 0) return null;
+                      const info = statusLabel[status];
+                      return (
+                        <div key={status} className="mb-2">
+                          <Badge className={`${info.color} mb-1`}>{info.label}</Badge>
+                          {group.map(item => (
+                            <div key={item.id} className="flex items-center justify-between py-1 text-sm">
+                              <div className="flex-1 min-w-0">
+                                <span>{item.menu_items?.name}</span>
+                                <span className="text-muted-foreground"> x{item.quantity}</span>
+                                <span className="text-muted-foreground ml-2">{((item.menu_items?.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</span>
+                                {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+                              </div>
+                              {(status === "new" || canDeleteAll) ? (
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                              ) : (
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-30 cursor-not-allowed" disabled><Trash2 className="h-3 w-3" /></Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    <Separator />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Tổng cộng</span>
+                      <span className="text-primary">{orderTotal.toLocaleString("vi-VN")}₫</span>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="outline" className="flex-1" onClick={() => showBillPreview(false)}>
+                        <Eye className="mr-2 h-4 w-4" /> Xem bill
+                      </Button>
+                      <Button className="flex-1" onClick={() => showBillPreview(true)}>
+                        <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </DialogContent>
