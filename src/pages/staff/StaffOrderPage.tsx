@@ -32,6 +32,7 @@ export default function StaffOrderPage() {
   const [orderItems, setOrderItems] = useState<OrderItemWithMenu[]>([]);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [menuSearch, setMenuSearch] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [paying, setPaying] = useState(false);
   const [restaurantName, setRestaurantName] = useState("");
