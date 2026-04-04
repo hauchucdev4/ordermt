@@ -245,8 +245,9 @@ export default function StaffOrderPage() {
     done: { label: "Hoàn thành", color: "bg-green-500/20 text-green-700 dark:text-green-300" },
   };
 
+  const removeAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
   const filteredMenu = menuSearch.trim()
-    ? menuItems.filter(m => m.name.toLowerCase().includes(menuSearch.trim().toLowerCase()))
+    ? menuItems.filter(m => removeAccents(m.name.toLowerCase()).includes(removeAccents(menuSearch.trim().toLowerCase())))
     : menuItems;
   const categories = [...new Set(filteredMenu.map(m => m.category))];
 
