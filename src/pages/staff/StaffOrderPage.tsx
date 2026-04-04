@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText, Eye } from "lucide-react";
+import { Loader2, Plus, Minus, Trash2, Send, CreditCard, FileText, Eye, Search } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ReceiptPreview, { type ReceiptData } from "@/components/restaurant/ReceiptPreview";
 
@@ -32,6 +32,7 @@ export default function StaffOrderPage() {
   const [orderItems, setOrderItems] = useState<OrderItemWithMenu[]>([]);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [menuSearch, setMenuSearch] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [paying, setPaying] = useState(false);
   const [restaurantName, setRestaurantName] = useState("");
@@ -143,6 +144,7 @@ export default function StaffOrderPage() {
     setSelectedTable(table);
     setCart({});
     setNotes({});
+    setMenuSearch("");
   };
 
   const addToCart = (menuId: string, delta: number) => {
@@ -243,7 +245,10 @@ export default function StaffOrderPage() {
     done: { label: "Hoàn thành", color: "bg-green-500/20 text-green-700 dark:text-green-300" },
   };
 
-  const categories = [...new Set(menuItems.map(m => m.category))];
+  const filteredMenu = menuSearch.trim()
+    ? menuItems.filter(m => m.name.toLowerCase().includes(menuSearch.trim().toLowerCase()))
+    : menuItems;
+  const categories = [...new Set(filteredMenu.map(m => m.category))];
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
@@ -278,12 +283,19 @@ export default function StaffOrderPage() {
             {/* LEFT: Menu + sticky cart */}
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+                <div className="relative mb-2">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Tìm món..." value={menuSearch} onChange={e => setMenuSearch(e.target.value)} className="pl-8 h-9 text-sm" />
+                </div>
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Thực đơn</h3>
+                {categories.length === 0 && menuSearch && (
+                  <p className="text-sm text-muted-foreground py-4 text-center">Không tìm thấy món "{menuSearch}"</p>
+                )}
                 {categories.map(cat => (
                   <div key={cat}>
                     <h4 className="font-medium text-xs text-muted-foreground mb-1">{cat}</h4>
                     <div className="space-y-1.5">
-                      {menuItems.filter(m => m.category === cat).map(item => (
+                      {filteredMenu.filter(m => m.category === cat).map(item => (
                         <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border">
                           <div className="flex items-center gap-2">
                             {item.image_url && <img src={item.image_url} alt={item.name} className="h-9 w-9 rounded object-cover" />}
