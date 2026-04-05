@@ -109,7 +109,7 @@ export default function ChefKitchenPage() {
   );
 
   const ItemRow = ({ item, action }: { item: KitchenItem; action?: (item: KitchenItem) => void }) => (
-    <div className="flex items-center gap-2 rounded-lg border bg-card p-2 text-sm animate-fade-in">
+    <div className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm animate-fade-in">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="font-medium truncate">{item.menu_item_name}</span>
@@ -123,7 +123,7 @@ export default function ChefKitchenPage() {
         {item.note && <p className="text-[11px] text-muted-foreground italic truncate">{item.note}</p>}
       </div>
       {action && (
-        <Button size="sm" variant={item.status === "new" ? "default" : "outline"} className="shrink-0 h-7 text-xs px-2" onClick={() => action(item)}>
+        <Button size="default" variant={item.status === "new" ? "default" : "outline"} className="shrink-0 h-9 text-sm px-4 font-medium" onClick={() => action(item)}>
           {item.status === "new" ? "Nhận" : "Xong"}
         </Button>
       )}
@@ -142,7 +142,7 @@ export default function ChefKitchenPage() {
         {colItems.map(item => <ItemCard key={item.id} item={item} action={action} />)}
       </div>
       {/* Desktop: danh sách dọc */}
-      <div className="hidden lg:block space-y-1.5 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
+      <div className="hidden lg:block space-y-2.5 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
         {colItems.map(item => <ItemRow key={item.id} item={item} action={action} />)}
       </div>
       {colItems.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">Trống</p>}
