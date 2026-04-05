@@ -479,43 +479,50 @@ export default function StaffOrderPage() {
                 )}
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Order hiện tại</h3>
-                {orderItems.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4">Chưa có món nào</p>
-                ) : (
-                  <>
-                    {(["new", "preparing", "done"] as const).map(status => {
-                      const group = orderItems.filter(i => i.status === status);
-                      if (group.length === 0) return null;
-                      const info = statusLabel[status];
-                      return (
-                        <div key={status} className="mb-2">
-                          <Badge className={`${info.color} mb-1`}>{info.label}</Badge>
-                          {group.map(item => (
-                            <div key={item.id} className="flex items-center justify-between py-1 text-sm">
-                              <div className="flex-1 min-w-0">
-                                <span>{item.menu_items?.name}</span>
-                                <span className="text-muted-foreground"> x{item.quantity}</span>
-                                <span className="text-muted-foreground ml-2">{((item.menu_items?.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</span>
-                                {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="p-6 pb-2">
+                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Order hiện tại</h3>
+                </div>
+                <div className="flex-1 overflow-y-auto px-6 space-y-4">
+                  {orderItems.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4">Chưa có món nào</p>
+                  ) : (
+                    <>
+                      {(["new", "preparing", "done"] as const).map(status => {
+                        const group = orderItems.filter(i => i.status === status);
+                        if (group.length === 0) return null;
+                        const info = statusLabel[status];
+                        return (
+                          <div key={status} className="mb-2">
+                            <Badge className={`${info.color} mb-1`}>{info.label}</Badge>
+                            {group.map(item => (
+                              <div key={item.id} className="flex items-center justify-between py-1 text-sm">
+                                <div className="flex-1 min-w-0">
+                                  <span>{item.menu_items?.name}</span>
+                                  <span className="text-muted-foreground"> x{item.quantity}</span>
+                                  <span className="text-muted-foreground ml-2">{((item.menu_items?.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</span>
+                                  {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+                                </div>
+                                {(status === "new" || canDeleteAll) ? (
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                ) : (
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-30 cursor-not-allowed" disabled><Trash2 className="h-3 w-3" /></Button>
+                                )}
                               </div>
-                              {(status === "new" || canDeleteAll) ? (
-                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                              ) : (
-                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-30 cursor-not-allowed" disabled><Trash2 className="h-3 w-3" /></Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                    <Separator />
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </div>
+                {orderItems.length > 0 && (
+                  <div className="shrink-0 border-t bg-background p-6 pt-4 space-y-3">
                     <div className="flex justify-between font-bold text-lg">
                       <span>Tổng cộng</span>
                       <span className="text-primary">{orderTotal.toLocaleString("vi-VN")}₫</span>
                     </div>
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex gap-2">
                       <Button variant="outline" className="flex-1" onClick={() => showBillPreview(false)}>
                         <Eye className="mr-2 h-4 w-4" /> Xem bill
                       </Button>
@@ -523,7 +530,7 @@ export default function StaffOrderPage() {
                         <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
                       </Button>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
