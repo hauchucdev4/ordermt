@@ -142,7 +142,7 @@ export default function ChefKitchenPage() {
         {colItems.map(item => <ItemCard key={item.id} item={item} action={action} />)}
       </div>
       {/* Desktop: danh sách dọc */}
-      <div className="hidden lg:block space-y-1.5 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
+      <div className="hidden lg:block space-y-2.5 max-h-[calc(100vh-120px)] overflow-y-auto pr-1">
         {colItems.map(item => <ItemRow key={item.id} item={item} action={action} />)}
       </div>
       {colItems.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">Trống</p>}
