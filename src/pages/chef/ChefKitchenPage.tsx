@@ -20,6 +20,9 @@ export default function ChefKitchenPage() {
   const [loading, setLoading] = useState(true);
   const audioRef = useRef<AudioContext | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // Track IDs we just updated locally to skip redundant refetch flicker
+  const recentLocalUpdates = useRef<Set<string>>(new Set());
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const playSound = () => {
     try {
@@ -59,6 +62,14 @@ export default function ChefKitchenPage() {
     setLoading(false);
   }, [profile?.restaurant_id]);
 
+  // Debounced fetch to avoid multiple rapid refetches from realtime
+  const debouncedFetch = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchItems();
+    }, 500);
+  }, [fetchItems]);
+
   useEffect(() => {
     fetchItems();
     if (!profile?.restaurant_id) return;
@@ -67,8 +78,39 @@ export default function ChefKitchenPage() {
       if (channelRef.current) supabase.removeChannel(channelRef.current);
       const channel = supabase
         .channel(`kitchen-realtime-${profile.restaurant_id}-${Date.now()}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => { playSound(); fetchItems(); })
-        .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchItems())
+        .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, (payload) => {
+          const changed = payload.new as any;
+          const eventType = payload.eventType;
+
+          // If this is an UPDATE we just did locally, skip refetch
+          if (eventType === "UPDATE" && changed?.id && recentLocalUpdates.current.has(changed.id)) {
+            recentLocalUpdates.current.delete(changed.id);
+            return;
+          }
+
+          // For INSERT (new order item), play sound and merge
+          if (eventType === "INSERT") {
+            playSound();
+          }
+
+          // For UPDATE from other clients, apply optimistically
+          if (eventType === "UPDATE" && changed?.id) {
+            setItems(prev => {
+              const exists = prev.some(i => i.id === changed.id);
+              if (exists) {
+                return prev.map(i => i.id === changed.id ? { ...i, status: changed.status } : i);
+              }
+              return prev;
+            });
+            // Still do a background fetch for full data consistency, debounced
+            debouncedFetch();
+            return;
+          }
+
+          // For INSERT/DELETE, do a debounced full fetch
+          debouncedFetch();
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => debouncedFetch())
         .subscribe((status) => {
           if (status === "CHANNEL_ERROR") setTimeout(setupChannel, 3000);
         });
@@ -82,13 +124,18 @@ export default function ChefKitchenPage() {
 
     return () => {
       clearInterval(heartbeat);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, [profile?.restaurant_id]);
 
   const updateStatus = async (itemId: string, newStatus: "preparing" | "done") => {
+    // Mark as local update to skip realtime echo
+    recentLocalUpdates.current.add(itemId);
     setItems(prev => prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i));
     await supabase.from("order_items").update({ status: newStatus }).eq("id", itemId);
+    // Auto-clear after 3s in case realtime event never arrives
+    setTimeout(() => recentLocalUpdates.current.delete(itemId), 3000);
   };
 
   const newItems = items.filter(i => i.status === "new");
@@ -98,7 +145,7 @@ export default function ChefKitchenPage() {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
   const ItemCard = ({ item, action }: { item: KitchenItem; action?: (item: KitchenItem) => void }) => (
-    <div className="aspect-square rounded-lg border bg-card p-1.5 flex flex-col items-center justify-center text-center gap-0.5 animate-fade-in">
+    <div className="aspect-square rounded-lg border bg-card p-1.5 flex flex-col items-center justify-center text-center gap-0.5">
       <p className="font-medium text-xs leading-tight line-clamp-2">{item.menu_item_name}</p>
       <p className="text-[10px] text-muted-foreground">x{item.quantity}</p>
       <p className="text-[10px] text-muted-foreground">{item.table_name}</p>
@@ -111,7 +158,7 @@ export default function ChefKitchenPage() {
   );
 
   const ItemRow = ({ item, action }: { item: KitchenItem; action?: (item: KitchenItem) => void }) => (
-    <div className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm animate-fade-in">
+    <div className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm transition-all duration-200">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="font-medium truncate">{item.menu_item_name}</span>
