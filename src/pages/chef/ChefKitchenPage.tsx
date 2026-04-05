@@ -48,11 +48,13 @@ export default function ChefKitchenPage() {
       .order("created_at", { ascending: true });
 
     if (data) {
-      setItems(data.map((item: any) => ({
+      const mapped = data.map((item: any) => ({
         ...item,
         menu_item_name: item.menu_items?.name || "",
         table_name: item.orders?.tables?.name || "",
-      })));
+      }));
+      mapped.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      setItems(mapped);
     }
     setLoading(false);
   }, [profile?.restaurant_id]);
