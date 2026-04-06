@@ -12,7 +12,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, Trash2, Edit, UtensilsCrossed, ImageIcon, Upload } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, UtensilsCrossed, ImageIcon, Upload, Search } from "lucide-react";
+import { matchSearch } from "@/lib/searchUtils";
 import type { Database } from "@/integrations/supabase/types";
 
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
