@@ -40,6 +40,7 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
   const [staff, setStaff] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterRole, setFilterRole] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const STAFF_ROLES = managerMode
     ? ALL_STAFF_ROLES.filter(r => r.value !== "manager")
