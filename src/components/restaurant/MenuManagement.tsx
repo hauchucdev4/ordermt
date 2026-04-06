@@ -105,7 +105,8 @@ export default function MenuManagement({ restaurantId }: { restaurantId: string 
     toast({ title: "Đã xóa món" });
   };
 
-  const filtered = filterCat === "all" ? items : items.filter((i) => i.category === filterCat);
+  const filtered = (filterCat === "all" ? items : items.filter((i) => i.category === filterCat))
+    .filter((i) => matchSearch(i.name, searchQuery));
 
   if (loading) {
     return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
