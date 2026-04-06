@@ -67,14 +67,14 @@ export default function ReceiptPreview({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-sm p-0 overflow-hidden bg-white dark:bg-zinc-900">
         {/* Action bar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
+        <div className="flex items-center justify-between px-4 py-3 pr-12 border-b bg-muted/30">
           <span className="text-sm font-semibold text-foreground">Xem trước hóa đơn</span>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={handlePrint}>
-              <Printer className="h-4 w-4 mr-1" /> In
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="outline" className="h-8 px-2.5" onClick={handlePrint}>
+              <Printer className="h-3.5 w-3.5 mr-1" /> In
             </Button>
-            <Button size="sm" variant="outline" onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-1" /> PDF
+            <Button size="sm" variant="outline" className="h-8 px-2.5" onClick={handleDownload}>
+              <Download className="h-3.5 w-3.5 mr-1" /> PDF
             </Button>
           </div>
         </div>

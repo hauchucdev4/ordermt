@@ -16,7 +16,8 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Plus, Loader2, Trash2, Edit, KeyRound, Users, Lock, Unlock, FileSpreadsheet } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, KeyRound, Users, Lock, Unlock, FileSpreadsheet, Search } from "lucide-react";
+import { matchSearch } from "@/lib/searchUtils";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -39,6 +40,7 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
   const [staff, setStaff] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterRole, setFilterRole] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const STAFF_ROLES = managerMode
     ? ALL_STAFF_ROLES.filter(r => r.value !== "manager")
@@ -177,7 +179,8 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
     XLSX.writeFile(wb, `nhan-vien-${Date.now()}.xlsx`);
   };
 
-  const filtered = filterRole === "all" ? staff : staff.filter((s) => s.role === filterRole);
+  const filtered = (filterRole === "all" ? staff : staff.filter((s) => s.role === filterRole))
+    .filter((s) => matchSearch(s.full_name || "", searchQuery) || matchSearch(s.email || "", searchQuery));
 
   const roleLabel = (r: string) => ALL_STAFF_ROLES.find((sr) => sr.value === r)?.label || r;
   const roleBadgeVariant = (r: string) => {
@@ -192,7 +195,16 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm nhân viên..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 h-9"
+          />
+        </div>
         <div className="flex gap-2 items-center flex-wrap">
           <Select value={filterRole} onValueChange={setFilterRole}>
             <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>

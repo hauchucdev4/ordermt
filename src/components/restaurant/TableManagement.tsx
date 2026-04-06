@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Loader2, Trash2, Edit, LayoutGrid } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, LayoutGrid, Search } from "lucide-react";
+import { matchSearch } from "@/lib/searchUtils";
 import type { Database } from "@/integrations/supabase/types";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
@@ -21,6 +22,7 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TableRow | null>(null);
@@ -77,8 +79,17 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={() => { setName(""); setAddOpen(true); }}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm bàn..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 h-9"
+          />
+        </div>
+        <Button onClick={() => { setName(""); setAddOpen(true); }} className="ml-auto">
           <Plus className="mr-2 h-4 w-4" /> Thêm bàn
         </Button>
       </div>
@@ -92,7 +103,7 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
         </Card>
       ) : (
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {tables.map((t) => (
+          {tables.filter(t => matchSearch(t.name, searchQuery)).map((t) => (
             <Card key={t.id} className="text-center">
               <CardContent className="p-4 space-y-2">
                 <p className="font-semibold">{t.name}</p>
