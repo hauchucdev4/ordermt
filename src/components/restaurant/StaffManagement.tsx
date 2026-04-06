@@ -179,7 +179,8 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
     XLSX.writeFile(wb, `nhan-vien-${Date.now()}.xlsx`);
   };
 
-  const filtered = filterRole === "all" ? staff : staff.filter((s) => s.role === filterRole);
+  const filtered = (filterRole === "all" ? staff : staff.filter((s) => s.role === filterRole))
+    .filter((s) => matchSearch(s.full_name || "", searchQuery) || matchSearch(s.email || "", searchQuery));
 
   const roleLabel = (r: string) => ALL_STAFF_ROLES.find((sr) => sr.value === r)?.label || r;
   const roleBadgeVariant = (r: string) => {
