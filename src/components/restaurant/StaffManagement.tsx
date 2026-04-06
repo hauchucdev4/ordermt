@@ -16,7 +16,8 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Plus, Loader2, Trash2, Edit, KeyRound, Users, Lock, Unlock, FileSpreadsheet } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, KeyRound, Users, Lock, Unlock, FileSpreadsheet, Search } from "lucide-react";
+import { matchSearch } from "@/lib/searchUtils";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
