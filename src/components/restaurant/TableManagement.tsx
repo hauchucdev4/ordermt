@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Loader2, Trash2, Edit, LayoutGrid } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit, LayoutGrid, Search } from "lucide-react";
+import { matchSearch } from "@/lib/searchUtils";
 import type { Database } from "@/integrations/supabase/types";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
