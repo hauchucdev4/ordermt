@@ -22,6 +22,7 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TableRow | null>(null);
