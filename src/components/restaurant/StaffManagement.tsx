@@ -195,7 +195,16 @@ export default function StaffManagement({ restaurantId, managerMode = false }: S
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm nhân viên..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 h-9"
+          />
+        </div>
         <div className="flex gap-2 items-center flex-wrap">
           <Select value={filterRole} onValueChange={setFilterRole}>
             <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>

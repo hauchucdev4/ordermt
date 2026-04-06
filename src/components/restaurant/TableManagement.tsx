@@ -103,7 +103,7 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
         </Card>
       ) : (
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {tables.map((t) => (
+          {tables.filter(t => matchSearch(t.name, searchQuery)).map((t) => (
             <Card key={t.id} className="text-center">
               <CardContent className="p-4 space-y-2">
                 <p className="font-semibold">{t.name}</p>
