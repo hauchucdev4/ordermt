@@ -32,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("id", userId)
       .single();
     if (data) {
-      // Auto-lock check: if lock_until is set and has passed, lock the account
       if (data.lock_until && new Date(data.lock_until) <= new Date() && data.status === "active") {
         await supabase.from("profiles").update({ status: "locked" as const, lock_until: null }).eq("id", data.id);
         data.status = "locked";
@@ -40,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     setProfile(data);
+    return data;
   };
 
   const refreshProfile = async () => {
@@ -47,26 +47,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let initialLoad = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
+      async (_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        if (newSession?.user) {
+          await fetchProfile(newSession.user.id);
         } else {
           setProfile(null);
         }
-        setLoading(false);
+        if (initialLoad) {
+          initialLoad = false;
+          setLoading(false);
+        }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
+    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      if (existingSession?.user) {
+        await fetchProfile(existingSession.user.id);
       }
-      setLoading(false);
+      if (initialLoad) {
+        initialLoad = false;
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
