@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Minus, Trash2, Send, CreditCard, Eye, Search, UtensilsCrossed, ClipboardList } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ReceiptPreview, { type ReceiptData } from "@/components/restaurant/ReceiptPreview";
+import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
@@ -43,31 +44,23 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
   const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
   const [receiptPayMode, setReceiptPayMode] = useState(false);
   const [mobileTab, setMobileTab] = useState<"menu" | "order">("menu");
-  const audioRef = useRef<AudioContext | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const previousTableSignatureRef = useRef<string | null>(null);
+  const previousOrderItemsRef = useRef<Array<{ id: string; status: string }>>([]);
 
   const canDeleteAll = profile?.role === "manager" || profile?.role === "admin";
 
-  const playSound = () => {
-    try {
-      if (!audioRef.current) audioRef.current = new AudioContext();
-      const ctx = audioRef.current;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 660;
-      osc.type = "sine";
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.3);
-    } catch {}
-  };
-
   const fetchTables = useCallback(async () => {
     const { data } = await supabase.from("tables").select("*").eq("restaurant_id", restaurantId).order("name");
-    setTables(data || []);
+    const nextTables = data || [];
+    const nextSignature = nextTables.map(table => `${table.id}:${table.status}`).join("|");
+
+    if (previousTableSignatureRef.current !== null && previousTableSignatureRef.current !== nextSignature) {
+      playRealtimeAlert("update");
+    }
+
+    previousTableSignatureRef.current = nextSignature;
+    setTables(nextTables);
   }, [restaurantId]);
 
   const fetchMenu = useCallback(async () => {
@@ -94,15 +87,37 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
       setOrderId(orders[0].id);
       const { data: items } = await supabase
         .from("order_items").select("*, menu_items(name, price)").eq("order_id", orders[0].id).order("created_at");
-      setOrderItems((items as OrderItemWithMenu[]) || []);
+
+      const nextItems = (items as OrderItemWithMenu[]) || [];
+      const previousItems = previousOrderItemsRef.current;
+      const nextSnapshot = nextItems.map(item => ({ id: item.id, status: item.status }));
+
+      if (previousItems.length > 0) {
+        const previousMap = new Map(previousItems.map(item => [item.id, item.status]));
+        const hasNewItem = nextSnapshot.some(item => !previousMap.has(item.id));
+        const hasStatusChange = nextSnapshot.some(item => previousMap.has(item.id) && previousMap.get(item.id) !== item.status);
+
+        if (hasNewItem) playRealtimeAlert("new");
+        else if (hasStatusChange) playRealtimeAlert("update");
+      }
+
+      previousOrderItemsRef.current = nextSnapshot;
+      setOrderItems(nextItems);
     } else {
       setOrderId(null);
+      previousOrderItemsRef.current = [];
       setOrderItems([]);
     }
   }, []);
 
   useEffect(() => {
+    const detachAudioPrime = primeRealtimeAudio();
     fetchData();
+
+    const refreshView = () => {
+      fetchTables();
+      if (selectedTable) loadTableOrder(selectedTable);
+    };
 
     const setupChannel = () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current);
@@ -110,18 +125,16 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
       const channel = supabase
         .channel(`order-station-${restaurantId}-${Date.now()}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => {
-          playSound();
-          if (selectedTable) loadTableOrder(selectedTable);
+          refreshView();
         })
         .on("postgres_changes", { event: "*", schema: "public", table: "tables", filter: `restaurant_id=eq.${restaurantId}` }, () => {
           fetchTables();
         })
         .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `restaurant_id=eq.${restaurantId}` }, () => {
-          if (selectedTable) loadTableOrder(selectedTable);
-          fetchTables();
+          refreshView();
         })
         .subscribe((status) => {
-          if (status === "CHANNEL_ERROR") setTimeout(setupChannel, 3000);
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setTimeout(setupChannel, 3000);
         });
 
       channelRef.current = channel;
@@ -131,18 +144,22 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
     const heartbeat = setInterval(() => {
       if (channelRef.current) { supabase.removeChannel(channelRef.current); setupChannel(); }
     }, 5 * 60 * 1000);
+    const poller = setInterval(refreshView, 2500);
 
     return () => {
+      detachAudioPrime();
       clearInterval(heartbeat);
+      clearInterval(poller);
       if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
-  }, [restaurantId, selectedTable?.id]);
+  }, [restaurantId, selectedTable, fetchData, fetchTables, loadTableOrder]);
 
   useEffect(() => {
     if (selectedTable) loadTableOrder(selectedTable);
   }, [selectedTable?.id]);
 
   const openTable = (table: TableRow) => {
+    previousOrderItemsRef.current = [];
     setSelectedTable(table);
     setCart({});
     setNotes({});
