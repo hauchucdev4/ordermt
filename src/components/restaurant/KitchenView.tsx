@@ -22,6 +22,36 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const recentLocalUpdates = useRef<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const playSound = (type: "new" | "update" = "new") => {
+    try {
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.value = type === "new" ? 880 : 520;
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.35);
+      if (type === "new") {
+        setTimeout(() => {
+          const o2 = ctx.createOscillator();
+          const g2 = ctx.createGain();
+          o2.connect(g2); g2.connect(ctx.destination);
+          o2.type = "sine"; o2.frequency.value = 1100;
+          g2.gain.setValueAtTime(0.25, ctx.currentTime);
+          g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+          o2.start(ctx.currentTime); o2.stop(ctx.currentTime + 0.35);
+        }, 180);
+      }
+    } catch {}
+  };
 
   const fetchItems = useCallback(async () => {
     const { data } = await supabase
@@ -59,12 +89,19 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
           const changed = payload.new as any;
           const eventType = payload.eventType;
 
+          if (eventType === "INSERT") {
+            playSound("new");
+            debouncedFetch();
+            return;
+          }
+
           if (eventType === "UPDATE" && changed?.id && recentLocalUpdates.current.has(changed.id)) {
             recentLocalUpdates.current.delete(changed.id);
             return;
           }
 
           if (eventType === "UPDATE" && changed?.id) {
+            playSound("update");
             setItems(prev => {
               const exists = prev.some(i => i.id === changed.id);
               if (exists) return prev.map(i => i.id === changed.id ? { ...i, status: changed.status } : i);

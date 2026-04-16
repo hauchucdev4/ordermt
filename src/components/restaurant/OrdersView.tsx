@@ -16,8 +16,24 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
   const [orders, setOrders] = useState<OrderWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const initialLoadRef = useRef(true);
+
+  const playSound = (type: "new" | "update" = "new") => {
+    try {
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.value = type === "new" ? 880 : 600;
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+    } catch {}
+  };
 
   const fetchOrders = useCallback(async () => {
     if (initialLoadRef.current) setLoading(true);
@@ -56,7 +72,11 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
       if (channelRef.current) supabase.removeChannel(channelRef.current);
       const channel = supabase
         .channel(`orders-view-${restaurantId}-${Date.now()}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => fetchOrders())
+        .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, (payload) => {
+          if (payload.eventType === "INSERT") playSound("new");
+          else if (payload.eventType === "UPDATE") playSound("update");
+          fetchOrders();
+        })
         .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchOrders())
         .subscribe((status) => {
           if (status === "CHANNEL_ERROR") setTimeout(setupChannel, 3000);
