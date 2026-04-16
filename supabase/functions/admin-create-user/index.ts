@@ -16,25 +16,34 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Verify caller is superadmin or admin
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Unauthorized");
+    if (!authHeader) throw new Error("Unauthorized: missing token");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
-    if (!caller) throw new Error("Unauthorized");
+    const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+    if (authErr || !caller) throw new Error("Unauthorized: invalid token");
 
-    const { data: callerProfile } = await supabaseAdmin
+    const { data: callerProfile, error: profErr } = await supabaseAdmin
       .from("profiles")
       .select("role")
       .eq("id", caller.id)
       .single();
 
+    if (profErr) throw new Error(`Profile lookup failed: ${profErr.message}`);
     if (!callerProfile || !["superadmin", "admin", "manager"].includes(callerProfile.role)) {
-      throw new Error("Insufficient permissions");
+      throw new Error(`Insufficient permissions (role=${callerProfile?.role ?? "none"})`);
     }
 
-    const { email, password, fullName, role, restaurantId, lockUntil } = await req.json();
+    const body = await req.json();
+    const { email, password, fullName, role, restaurantId, lockUntil } = body;
+    console.log("admin-create-user request:", { email, fullName, role, restaurantId, hasPassword: !!password });
+
+    if (!email || !password || !fullName) {
+      throw new Error("Missing required fields: email, password, fullName");
+    }
+    if (password.length < 6) {
+      throw new Error("Mật khẩu phải có ít nhất 6 ký tự");
+    }
 
     // Create auth user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -44,26 +53,35 @@ Deno.serve(async (req) => {
       user_metadata: { full_name: fullName, role: role || "admin" },
     });
 
-    if (createError) throw createError;
+    if (createError) {
+      console.error("createUser error:", createError);
+      throw new Error(createError.message);
+    }
+    if (!newUser?.user) throw new Error("User creation returned no user");
 
     // Update profile with additional info
-    if (newUser.user) {
-      const updates: Record<string, unknown> = { status: "active" };
-      if (restaurantId) updates.restaurant_id = restaurantId;
-      if (lockUntil) updates.lock_until = lockUntil;
-      
-      await supabaseAdmin
-        .from("profiles")
-        .update(updates)
-        .eq("id", newUser.user.id);
+    const updates: Record<string, unknown> = { status: "active", full_name: fullName, role: role || "admin" };
+    if (restaurantId) updates.restaurant_id = restaurantId;
+    if (lockUntil) updates.lock_until = lockUntil;
+
+    const { error: updateErr } = await supabaseAdmin
+      .from("profiles")
+      .update(updates)
+      .eq("id", newUser.user.id);
+
+    if (updateErr) {
+      console.error("profile update error:", updateErr);
+      throw new Error(`Profile update failed: ${updateErr.message}`);
     }
 
-    return new Response(JSON.stringify({ success: true, userId: newUser.user?.id }), {
+    return new Response(JSON.stringify({ success: true, userId: newUser.user.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("admin-create-user failed:", message);
+    return new Response(JSON.stringify({ error: message }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
