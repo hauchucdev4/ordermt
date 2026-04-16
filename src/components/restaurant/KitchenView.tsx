@@ -121,47 +121,72 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
-  const ItemRow = ({ item, action }: { item: KitchenItem; action?: (item: KitchenItem) => void }) => (
-    <div className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm transition-all duration-200">
+  const ItemRow = ({ item, action, theme }: { item: KitchenItem; action?: (item: KitchenItem) => void; theme: { card: string; btn: string } }) => (
+    <div className={`flex items-center gap-3 rounded-lg border p-3 text-sm transition-all duration-200 shadow-sm ${theme.card}`}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="font-medium truncate">{item.menu_item_name}</span>
+          <span className="font-semibold truncate">{item.menu_item_name}</span>
           <span className="text-muted-foreground shrink-0">x{item.quantity}</span>
         </div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span>{item.table_name}</span>
+          <span className="font-medium">{item.table_name}</span>
           <span>•</span>
           <span>{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
         </div>
-        {item.note && <p className="text-[11px] text-muted-foreground italic truncate">{item.note}</p>}
+        {item.note && (
+          <p className="mt-1 text-xs font-semibold text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 rounded px-2 py-1 truncate">
+            📝 {item.note}
+          </p>
+        )}
       </div>
       {action && (
-        <Button size="default" variant={item.status === "new" ? "default" : "outline"} className="shrink-0 h-9 text-sm px-4 font-medium" onClick={() => action(item)}>
+        <Button size="default" className={`shrink-0 h-9 text-sm px-4 font-semibold ${theme.btn}`} onClick={() => action(item)}>
           {item.status === "new" ? "Nhận" : "Xong"}
         </Button>
       )}
     </div>
   );
 
-  const Column = ({ title, emoji, items: colItems, action }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void }) => (
-    <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-2 mb-2 px-1">
-        <span className="text-sm">{emoji}</span>
-        <span className="text-sm font-semibold">{title}</span>
-        <Badge variant="secondary" className="text-[10px] h-5 px-1.5 ml-auto">{colItems.length}</Badge>
+  const Column = ({ title, emoji, items: colItems, action, theme }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void; theme: { header: string; bg: string; card: string; btn: string } }) => (
+    <div className={`flex-1 min-w-0 rounded-xl p-3 border-2 ${theme.bg}`}>
+      <div className={`flex items-center gap-2 mb-3 px-1 pb-2 border-b-2 ${theme.header}`}>
+        <span className="text-base">{emoji}</span>
+        <span className="text-sm font-bold uppercase tracking-wide">{title}</span>
+        <Badge className="text-[11px] h-5 px-2 ml-auto bg-background/80 text-foreground border">{colItems.length}</Badge>
       </div>
-      <div className="space-y-2.5 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
-        {colItems.map(item => <ItemRow key={item.id} item={item} action={action} />)}
+      <div className="space-y-2.5 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+        {colItems.map(item => <ItemRow key={item.id} item={item} action={action} theme={{ card: theme.card, btn: theme.btn }} />)}
       </div>
-      {colItems.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">Trống</p>}
+      {colItems.length === 0 && <p className="text-xs text-muted-foreground text-center py-6 italic">Trống</p>}
     </div>
   );
 
+  const themes = {
+    new: {
+      header: "border-orange-400 dark:border-orange-600 text-orange-700 dark:text-orange-300",
+      bg: "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900",
+      card: "bg-white dark:bg-orange-950/50 border-orange-200 dark:border-orange-800",
+      btn: "bg-orange-500 hover:bg-orange-600 text-white",
+    },
+    preparing: {
+      header: "border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-300",
+      bg: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900",
+      card: "bg-white dark:bg-blue-950/50 border-blue-200 dark:border-blue-800",
+      btn: "bg-blue-500 hover:bg-blue-600 text-white",
+    },
+    done: {
+      header: "border-emerald-400 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300",
+      bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900",
+      card: "bg-white dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800",
+      btn: "",
+    },
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-4">
-      <Column title="Món mới" emoji="🆕" items={newItems} action={(item) => updateStatus(item.id, "preparing")} />
-      <Column title="Đang làm" emoji="🍳" items={preparingItems} action={(item) => updateStatus(item.id, "done")} />
-      <Column title="Hoàn thành" emoji="✅" items={doneItems} />
+      <Column title="Món mới" emoji="🆕" items={newItems} action={(item) => updateStatus(item.id, "preparing")} theme={themes.new} />
+      <Column title="Đang làm" emoji="🍳" items={preparingItems} action={(item) => updateStatus(item.id, "done")} theme={themes.preparing} />
+      <Column title="Hoàn thành" emoji="✅" items={doneItems} theme={themes.done} />
     </div>
   );
 }
