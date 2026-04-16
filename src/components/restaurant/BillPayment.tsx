@@ -7,15 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Receipt, CreditCard, Eye } from "lucide-react";
+import { Loader2, Receipt, CreditCard, Eye, AlertTriangle } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ReceiptPreview, { type ReceiptData } from "./ReceiptPreview";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 
-interface BillItem { name: string; quantity: number; price: number; }
-interface TableBill { table: TableRow; orderId: string; items: BillItem[]; total: number; createdAt: string; }
+interface BillItem { name: string; quantity: number; price: number; isNew?: boolean; }
+interface TableBill { table: TableRow; orderId: string; items: BillItem[]; total: number; createdAt: string; newCount: number; }
 
 export default function BillPayment({ restaurantId, restaurantName }: { restaurantId: string; restaurantName?: string }) {
   const { toast } = useToast();
@@ -25,6 +29,7 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
   const [paying, setPaying] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
   const [receiptPayMode, setReceiptPayMode] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"view" | "pay" | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const fetchOccupiedTables = useCallback(async () => {
@@ -77,10 +82,12 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
 
     const items: BillItem[] = (orderItems || []).map((oi: any) => ({
       name: oi.menu_items?.name || "?", quantity: oi.quantity, price: Number(oi.menu_items?.price || 0),
+      isNew: oi.status === "new",
     }));
     const total = items.reduce((s, i) => s + i.quantity * i.price, 0);
+    const newCount = items.filter(i => i.isNew).length;
 
-    setSelectedBill({ table, orderId: order.id, items, total, createdAt: order.created_at });
+    setSelectedBill({ table, orderId: order.id, items, total, createdAt: order.created_at, newCount });
   };
 
   const handlePay = async () => {
@@ -112,6 +119,20 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
       items: selectedBill.items,
       total: selectedBill.total,
     });
+  };
+
+  const requestAction = (action: "view" | "pay") => {
+    if (!selectedBill) return;
+    if (selectedBill.newCount > 0) {
+      setPendingAction(action);
+      return;
+    }
+    showBillPreview(action === "pay");
+  };
+
+  const confirmPendingAction = () => {
+    if (pendingAction) showBillPreview(pendingAction === "pay");
+    setPendingAction(null);
   };
 
   if (loading) {
@@ -196,15 +217,34 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
 
           {/* Actions */}
           <div className="border-t px-6 py-4 flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => showBillPreview(false)} disabled={!selectedBill?.items.length}>
+            <Button variant="outline" className="flex-1" onClick={() => requestAction("view")} disabled={!selectedBill?.items.length}>
               <Eye className="mr-2 h-4 w-4" /> Xem hóa đơn
             </Button>
-            <Button className="flex-1" onClick={() => showBillPreview(true)} disabled={!selectedBill?.items.length}>
+            <Button className="flex-1" onClick={() => requestAction("pay")} disabled={!selectedBill?.items.length}>
               <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!pendingAction} onOpenChange={open => !open && setPendingAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Còn món bếp chưa nhận
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Hóa đơn còn <strong>{selectedBill?.newCount} món</strong> ở trạng thái "mới" mà bếp chưa nhận.
+              Bạn có chắc chắn muốn {pendingAction === "pay" ? "thanh toán" : "tiếp tục xem hóa đơn"}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmPendingAction}>Tiếp tục</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <ReceiptPreview
         data={receiptPreview}
