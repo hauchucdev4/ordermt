@@ -484,19 +484,23 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
                   ))}
                 </div>
                 {Object.keys(cart).length > 0 && (
-                  <div className="border-t bg-muted/50 p-4 space-y-2 shrink-0 max-h-[35%] overflow-y-auto">
-                    <h4 className="font-semibold text-sm">Ghi chú ({Object.values(cart).reduce((a, b) => a + b, 0)} món)</h4>
-                    {Object.entries(cart).map(([menuId, qty]) => {
-                      const item = menuItems.find(m => m.id === menuId);
-                      return (
-                        <div key={menuId} className="flex items-center gap-2">
-                          <span className="text-sm font-medium shrink-0">{item?.name} <Badge variant="secondary" className="ml-1">x{qty}</Badge></span>
-                          <Input placeholder="Ghi chú..." value={notes[menuId] || ""} onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))} className="h-7 text-xs flex-1" />
-                        </div>
-                      );
-                    })}
-                    <Button className="w-full" onClick={submitOrder}><Send className="mr-2 h-4 w-4" /> Đặt món ({Object.values(cart).reduce((a, b) => a + b, 0)})</Button>
-                  </div>
+                  <>
+                    <div className="border-t bg-muted/50 p-4 space-y-2 shrink-0 max-h-[28%] overflow-y-auto">
+                      <h4 className="font-semibold text-sm">Ghi chú ({Object.values(cart).reduce((a, b) => a + b, 0)} món)</h4>
+                      {Object.entries(cart).map(([menuId, qty]) => {
+                        const item = menuItems.find(m => m.id === menuId);
+                        return (
+                          <div key={menuId} className="flex items-center gap-2">
+                            <span className="text-sm font-medium shrink-0">{item?.name} <Badge variant="secondary" className="ml-1">x{qty}</Badge></span>
+                            <Input placeholder="Ghi chú..." value={notes[menuId] || ""} onChange={(e) => setNotes(prev => ({ ...prev, [menuId]: e.target.value }))} className="h-7 text-xs flex-1" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="shrink-0 border-t bg-background p-4">
+                      <Button className="w-full h-11 font-semibold" onClick={submitOrder}><Send className="mr-2 h-4 w-4" /> Đặt món ({Object.values(cart).reduce((a, b) => a + b, 0)})</Button>
+                    </div>
+                  </>
                 )}
               </div>
 
