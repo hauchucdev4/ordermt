@@ -50,17 +50,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let initialLoad = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      (_event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         if (newSession?.user) {
-          await fetchProfile(newSession.user.id);
+          // Defer supabase call to avoid deadlocking the auth client
+          setTimeout(() => {
+            fetchProfile(newSession.user.id).finally(() => {
+              if (initialLoad) {
+                initialLoad = false;
+                setLoading(false);
+              }
+            });
+          }, 0);
         } else {
           setProfile(null);
-        }
-        if (initialLoad) {
-          initialLoad = false;
-          setLoading(false);
+          if (initialLoad) {
+            initialLoad = false;
+            setLoading(false);
+          }
         }
       }
     );
