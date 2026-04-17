@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/NotFound";
 import RestaurantRealtimeNotifier from "./components/restaurant/RestaurantRealtimeNotifier";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 // SuperAdmin
 import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout";
@@ -48,6 +49,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <NotificationProvider>
           <RestaurantRealtimeNotifier />
           <Routes>
             <Route path="/" element={<Index />} />
@@ -95,6 +97,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
