@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, UtensilsCrossed, LucideIcon } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationBell from "@/components/NotificationBell";
 
 interface NavItem {
   title: string;
@@ -95,6 +96,7 @@ export default function DashboardLayout({ children, navItems, title }: Dashboard
               <h2 className="text-sm font-semibold text-foreground hidden sm:block">{title}</h2>
             </div>
             <div className="flex items-center gap-1">
+            <NotificationBell />
             <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

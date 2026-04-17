@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Link, Outlet } from "react-router-dom";
 import { Settings, LogOut, UtensilsCrossed } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function StaffLayout() {
   const { profile, signOut } = useAuth();
@@ -19,6 +20,7 @@ export default function StaffLayout() {
           <span className="text-xs text-muted-foreground">Staff</span>
         </div>
         <div className="flex items-center gap-1">
+        <NotificationBell />
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
