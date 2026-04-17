@@ -185,7 +185,7 @@ export default function RestaurantRealtimeNotifier() {
       clearInterval(heartbeat);
       if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
-  }, [isKitchenScreen, profile, scope.ids, scope.names, scopeKey]);
+  }, [isKitchenScreen, profile, scope.ids, scope.names, scopeKey, pushNotification]);
 
   return null;
 }
