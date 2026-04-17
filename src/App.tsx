@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
 import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/NotFound";
+import RestaurantRealtimeNotifier from "./components/restaurant/RestaurantRealtimeNotifier";
 
 // SuperAdmin
 import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout";
@@ -47,6 +48,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <RestaurantRealtimeNotifier />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginPage />} />

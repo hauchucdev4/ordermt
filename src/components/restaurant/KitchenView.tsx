@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
 
@@ -121,72 +121,118 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
-  const ItemRow = ({ item, action, theme }: { item: KitchenItem; action?: (item: KitchenItem) => void; theme: { card: string; btn: string } }) => (
-    <div className={`flex items-center gap-3 rounded-lg border p-3 text-sm transition-all duration-200 shadow-sm ${theme.card}`}>
+  const ItemRow = ({ item, action, theme }: { item: KitchenItem; action?: (item: KitchenItem) => void; theme: { card: string; btn: string; pill: string } }) => (
+    <article className={`kitchen-item ${theme.card}`}>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="font-semibold truncate">{item.menu_item_name}</span>
-          <span className="text-muted-foreground shrink-0">x{item.quantity}</span>
-        </div>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span className="font-medium">{item.table_name}</span>
-          <span>•</span>
-          <span>{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold truncate text-foreground">{item.menu_item_name}</span>
+              <Badge className={`kitchen-pill ${theme.pill}`}>x{item.quantity}</Badge>
+            </div>
+            <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground/80">{item.table_name}</span>
+              <span>•</span>
+              <span>{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
+            </div>
+          </div>
         </div>
         {item.note && (
-          <p className="mt-1 text-xs font-semibold text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 rounded px-2 py-1 truncate">
-            📝 {item.note}
-          </p>
+          <div className="kitchen-note">
+            <span className="text-sm leading-none">📝</span>
+            <p className="min-w-0 break-words text-xs font-semibold leading-5">{item.note}</p>
+          </div>
         )}
       </div>
       {action && (
-        <Button size="default" className={`shrink-0 h-9 text-sm px-4 font-semibold ${theme.btn}`} onClick={() => action(item)}>
+        <Button size="default" className={`kitchen-action ${theme.btn}`} onClick={() => action(item)}>
           {item.status === "new" ? "Nhận" : "Xong"}
         </Button>
       )}
-    </div>
+    </article>
   );
 
-  const Column = ({ title, emoji, items: colItems, action, theme }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void; theme: { header: string; bg: string; card: string; btn: string } }) => (
-    <div className={`flex-1 min-w-0 rounded-xl p-3 border-2 ${theme.bg}`}>
-      <div className={`flex items-center gap-2 mb-3 px-1 pb-2 border-b-2 ${theme.header}`}>
-        <span className="text-base">{emoji}</span>
-        <span className="text-sm font-bold uppercase tracking-wide">{title}</span>
-        <Badge className="text-[11px] h-5 px-2 ml-auto bg-background/80 text-foreground border">{colItems.length}</Badge>
+  const Column = ({ title, emoji, items: colItems, action, theme }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void; theme: { column: string; header: string; card: string; btn: string; pill: string } }) => (
+    <section className={`kitchen-column ${theme.column}`}>
+      <div className={`kitchen-column-header ${theme.header}`}>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-base">{emoji}</span>
+          <div className="min-w-0">
+            <p className="text-sm font-bold uppercase tracking-[0.18em]">{title}</p>
+            <p className="text-xs text-muted-foreground">{colItems.length === 0 ? "Chưa có món" : `${colItems.length} món đang chờ xử lý`}</p>
+          </div>
+        </div>
+        <Badge className={`kitchen-count ${theme.pill}`}>{colItems.length}</Badge>
       </div>
-      <div className="space-y-2.5 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
-        {colItems.map(item => <ItemRow key={item.id} item={item} action={action} theme={{ card: theme.card, btn: theme.btn }} />)}
+      <div className="space-y-3 max-h-[calc(100vh-340px)] overflow-y-auto pr-1">
+        {colItems.map(item => <ItemRow key={item.id} item={item} action={action} theme={{ card: theme.card, btn: theme.btn, pill: theme.pill }} />)}
       </div>
-      {colItems.length === 0 && <p className="text-xs text-muted-foreground text-center py-6 italic">Trống</p>}
-    </div>
+      {colItems.length === 0 && <p className="kitchen-empty">Trống</p>}
+    </section>
   );
 
   const themes = {
     new: {
-      header: "border-orange-400 dark:border-orange-600 text-orange-700 dark:text-orange-300",
-      bg: "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900",
-      card: "bg-white dark:bg-orange-950/50 border-orange-200 dark:border-orange-800",
-      btn: "bg-orange-500 hover:bg-orange-600 text-white",
+      column: "kitchen-column--new",
+      header: "kitchen-column-header--new",
+      card: "kitchen-item--new",
+      btn: "kitchen-action--new",
+      pill: "kitchen-pill--new",
     },
     preparing: {
-      header: "border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-300",
-      bg: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900",
-      card: "bg-white dark:bg-blue-950/50 border-blue-200 dark:border-blue-800",
-      btn: "bg-blue-500 hover:bg-blue-600 text-white",
+      column: "kitchen-column--preparing",
+      header: "kitchen-column-header--preparing",
+      card: "kitchen-item--preparing",
+      btn: "kitchen-action--preparing",
+      pill: "kitchen-pill--preparing",
     },
     done: {
-      header: "border-emerald-400 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300",
-      bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900",
-      card: "bg-white dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800",
+      column: "kitchen-column--done",
+      header: "kitchen-column-header--done",
+      card: "kitchen-item--done",
       btn: "",
+      pill: "kitchen-pill--done",
     },
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
-      <Column title="Món mới" emoji="🆕" items={newItems} action={(item) => updateStatus(item.id, "preparing")} theme={themes.new} />
-      <Column title="Đang làm" emoji="🍳" items={preparingItems} action={(item) => updateStatus(item.id, "done")} theme={themes.preparing} />
-      <Column title="Hoàn thành" emoji="✅" items={doneItems} theme={themes.done} />
+    <div className="kitchen-shell">
+      <div className="kitchen-hero">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5 text-accent" />
+            Điều phối bếp realtime
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Bảng bếp rõ ràng, ưu tiên món mới trước</h2>
+            <p className="text-sm text-muted-foreground md:text-base">Mỗi cột là một giai đoạn xử lý, ghi chú được làm nổi bật để bếp không bỏ sót.</p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="kitchen-summary kitchen-summary--new">
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Món mới</span>
+            <strong className="text-3xl font-bold">{newItems.length}</strong>
+            <p className="text-xs text-muted-foreground">Cần bếp xác nhận ngay</p>
+          </div>
+          <div className="kitchen-summary kitchen-summary--preparing">
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Đang làm</span>
+            <strong className="text-3xl font-bold">{preparingItems.length}</strong>
+            <p className="text-xs text-muted-foreground">Theo dõi tiến độ hiện tại</p>
+          </div>
+          <div className="kitchen-summary kitchen-summary--done">
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Hoàn thành</span>
+            <strong className="text-3xl font-bold">{doneItems.length}</strong>
+            <p className="text-xs text-muted-foreground">Sẵn sàng phục vụ ra bàn</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Column title="Món mới" emoji="🆕" items={newItems} action={(item) => updateStatus(item.id, "preparing")} theme={themes.new} />
+        <Column title="Đang làm" emoji="🍳" items={preparingItems} action={(item) => updateStatus(item.id, "done")} theme={themes.preparing} />
+        <Column title="Hoàn thành" emoji="✅" items={doneItems} theme={themes.done} />
+      </div>
     </div>
   );
 }
