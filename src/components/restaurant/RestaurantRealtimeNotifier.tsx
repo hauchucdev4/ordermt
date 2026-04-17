@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 type RestaurantScope = {
   ids: string[];
@@ -19,6 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default function RestaurantRealtimeNotifier() {
   const { profile } = useAuth();
   const location = useLocation();
+  const { pushNotification } = useNotifications();
   const [scope, setScope] = useState<RestaurantScope>({ ids: [], names: {} });
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const recentEventsRef = useRef<Map<string, number>>(new Map());
