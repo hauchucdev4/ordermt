@@ -56,6 +56,16 @@
     --chart-3: 155 65% 40%;
     --chart-4: 280 60% 55%;
     --chart-5: 340 70% 55%;
+
+    --kitchen-new: 24 95% 55%;
+    --kitchen-new-soft: 28 100% 96%;
+    --kitchen-preparing: 214 86% 56%;
+    --kitchen-preparing-soft: 210 100% 97%;
+    --kitchen-done: 155 65% 40%;
+    --kitchen-done-soft: 155 60% 95%;
+    --kitchen-note-bg: 41 100% 96%;
+    --kitchen-note-border: 36 92% 56%;
+    --kitchen-note-foreground: 28 72% 22%;
   }
 
   .dark {
@@ -101,6 +111,16 @@
     --sidebar-accent-foreground: 210 20% 85%;
     --sidebar-border: 222 30% 15%;
     --sidebar-ring: 220 70% 55%;
+
+    --kitchen-new: 24 92% 62%;
+    --kitchen-new-soft: 24 40% 15%;
+    --kitchen-preparing: 214 90% 67%;
+    --kitchen-preparing-soft: 214 42% 16%;
+    --kitchen-done: 155 62% 52%;
+    --kitchen-done-soft: 155 35% 15%;
+    --kitchen-note-bg: 36 50% 16%;
+    --kitchen-note-border: 38 88% 60%;
+    --kitchen-note-foreground: 42 90% 82%;
   }
 }
 
@@ -117,5 +137,169 @@
 @layer utilities {
   .glass {
     @apply bg-card/80 backdrop-blur-lg border border-border/50;
+  }
+}
+
+@layer components {
+  .kitchen-shell {
+    @apply relative overflow-hidden rounded-[1.75rem] border p-4 md:p-6;
+    background:
+      radial-gradient(circle at top left, hsl(var(--accent) / 0.16), transparent 28%),
+      radial-gradient(circle at bottom right, hsl(var(--primary) / 0.14), transparent 34%),
+      linear-gradient(180deg, hsl(var(--card)), hsl(var(--background)) 120%);
+    box-shadow: 0 24px 70px -42px hsl(var(--foreground) / 0.32);
+  }
+
+  .kitchen-hero {
+    @apply mb-5 grid gap-4 xl:grid-cols-[1.2fr_1fr] xl:items-end;
+  }
+
+  .kitchen-summary {
+    @apply rounded-2xl border p-4 backdrop-blur;
+    background: hsl(var(--card) / 0.88);
+    box-shadow: inset 0 1px 0 hsl(var(--background) / 0.3);
+  }
+
+  .kitchen-summary--new {
+    border-color: hsl(var(--kitchen-new) / 0.22);
+    background: linear-gradient(135deg, hsl(var(--kitchen-new-soft)), hsl(var(--card)) 72%);
+  }
+
+  .kitchen-summary--preparing {
+    border-color: hsl(var(--kitchen-preparing) / 0.22);
+    background: linear-gradient(135deg, hsl(var(--kitchen-preparing-soft)), hsl(var(--card)) 72%);
+  }
+
+  .kitchen-summary--done {
+    border-color: hsl(var(--kitchen-done) / 0.22);
+    background: linear-gradient(135deg, hsl(var(--kitchen-done-soft)), hsl(var(--card)) 72%);
+  }
+
+  .kitchen-column {
+    @apply flex min-w-0 flex-col rounded-[1.4rem] border p-3 md:p-4;
+    background: hsl(var(--card) / 0.88);
+    box-shadow: 0 16px 45px -36px hsl(var(--foreground) / 0.35);
+  }
+
+  .kitchen-column--new {
+    border-color: hsl(var(--kitchen-new) / 0.24);
+    background: linear-gradient(180deg, hsl(var(--kitchen-new-soft)), hsl(var(--card)) 26%);
+  }
+
+  .kitchen-column--preparing {
+    border-color: hsl(var(--kitchen-preparing) / 0.24);
+    background: linear-gradient(180deg, hsl(var(--kitchen-preparing-soft)), hsl(var(--card)) 26%);
+  }
+
+  .kitchen-column--done {
+    border-color: hsl(var(--kitchen-done) / 0.24);
+    background: linear-gradient(180deg, hsl(var(--kitchen-done-soft)), hsl(var(--card)) 26%);
+  }
+
+  .kitchen-column-header {
+    @apply mb-3 flex items-center justify-between gap-3 border-b border-border/70 pb-3;
+  }
+
+  .kitchen-column-header--new {
+    color: hsl(var(--kitchen-new));
+  }
+
+  .kitchen-column-header--preparing {
+    color: hsl(var(--kitchen-preparing));
+  }
+
+  .kitchen-column-header--done {
+    color: hsl(var(--kitchen-done));
+  }
+
+  .kitchen-count,
+  .kitchen-pill {
+    @apply border font-semibold;
+  }
+
+  .kitchen-pill {
+    @apply h-6 px-2 text-[11px];
+  }
+
+  .kitchen-count {
+    @apply min-w-8 justify-center px-2 py-1 text-xs;
+  }
+
+  .kitchen-pill--new,
+  .kitchen-count.kitchen-pill--new {
+    background: hsl(var(--kitchen-new) / 0.12);
+    color: hsl(var(--kitchen-new));
+    border-color: hsl(var(--kitchen-new) / 0.18);
+  }
+
+  .kitchen-pill--preparing,
+  .kitchen-count.kitchen-pill--preparing {
+    background: hsl(var(--kitchen-preparing) / 0.12);
+    color: hsl(var(--kitchen-preparing));
+    border-color: hsl(var(--kitchen-preparing) / 0.18);
+  }
+
+  .kitchen-pill--done,
+  .kitchen-count.kitchen-pill--done {
+    background: hsl(var(--kitchen-done) / 0.12);
+    color: hsl(var(--kitchen-done));
+    border-color: hsl(var(--kitchen-done) / 0.18);
+  }
+
+  .kitchen-item {
+    @apply flex items-center gap-3 rounded-2xl border p-3 text-sm transition-transform duration-200;
+    box-shadow: 0 14px 28px -24px hsl(var(--foreground) / 0.3);
+  }
+
+  .kitchen-item:hover {
+    transform: translateY(-1px);
+  }
+
+  .kitchen-item--new {
+    border-color: hsl(var(--kitchen-new) / 0.16);
+    background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--kitchen-new-soft)));
+  }
+
+  .kitchen-item--preparing {
+    border-color: hsl(var(--kitchen-preparing) / 0.16);
+    background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--kitchen-preparing-soft)));
+  }
+
+  .kitchen-item--done {
+    border-color: hsl(var(--kitchen-done) / 0.16);
+    background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--kitchen-done-soft)));
+  }
+
+  .kitchen-note {
+    @apply mt-2 flex items-start gap-2 rounded-xl border px-3 py-2;
+    background: hsl(var(--kitchen-note-bg));
+    border-color: hsl(var(--kitchen-note-border) / 0.45);
+    color: hsl(var(--kitchen-note-foreground));
+  }
+
+  .kitchen-action {
+    @apply h-10 shrink-0 px-4 text-sm font-semibold shadow-sm;
+  }
+
+  .kitchen-action--new {
+    background: hsl(var(--kitchen-new));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .kitchen-action--new:hover {
+    background: hsl(var(--kitchen-new) / 0.9);
+  }
+
+  .kitchen-action--preparing {
+    background: hsl(var(--kitchen-preparing));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .kitchen-action--preparing:hover {
+    background: hsl(var(--kitchen-preparing) / 0.9);
+  }
+
+  .kitchen-empty {
+    @apply py-8 text-center text-xs italic text-muted-foreground;
   }
 }

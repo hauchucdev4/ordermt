@@ -8,8 +8,12 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Minus, Trash2, Send, CreditCard, Eye, Search, UtensilsCrossed, ClipboardList } from "lucide-react";
+import { Loader2, Plus, Minus, Trash2, Send, CreditCard, Eye, Search, UtensilsCrossed, ClipboardList, AlertTriangle } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ReceiptPreview, { type ReceiptData } from "@/components/restaurant/ReceiptPreview";
 import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
@@ -44,6 +48,7 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
   const [receiptPreview, setReceiptPreview] = useState<ReceiptData | null>(null);
   const [receiptPayMode, setReceiptPayMode] = useState(false);
   const [mobileTab, setMobileTab] = useState<"menu" | "order">("menu");
+  const [pendingAction, setPendingAction] = useState<"view" | "pay" | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const previousTableSignatureRef = useRef<string | null>(null);
   const previousOrderItemsRef = useRef<Array<{ id: string; status: string }>>([]);
@@ -164,6 +169,7 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
     setCart({});
     setNotes({});
     setMenuSearch("");
+    setPendingAction(null);
   };
 
   const addToCart = (menuId: string, delta: number) => {
@@ -258,6 +264,22 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
     setReceiptPreview(data);
   };
 
+  const requestAction = (action: "view" | "pay") => {
+    const nextNewItemsCount = orderItems.filter((item) => item.status === "new").length;
+    if (nextNewItemsCount > 0) {
+      setPendingAction(action);
+      return;
+    }
+
+    showBillPreview(action === "pay");
+  };
+
+  const confirmPendingAction = () => {
+    if (!pendingAction) return;
+    showBillPreview(pendingAction === "pay");
+    setPendingAction(null);
+  };
+
   const statusLabel: Record<string, { label: string; color: string }> = {
     new: { label: "Mới", color: "bg-accent text-accent-foreground" },
     preparing: { label: "Đang làm", color: "bg-orange-500/20 text-orange-700 dark:text-orange-300" },
@@ -269,6 +291,7 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
     ? menuItems.filter(m => removeAccents(m.name.toLowerCase()).includes(removeAccents(menuSearch.trim().toLowerCase())))
     : menuItems;
   const categories = [...new Set(filteredMenu.map(m => m.category))];
+  const newItemsCount = orderItems.filter((item) => item.status === "new").length;
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
@@ -292,7 +315,7 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
         )}
       </div>
 
-      <Dialog open={!!selectedTable} onOpenChange={(open) => !open && setSelectedTable(null)}>
+      <Dialog open={!!selectedTable} onOpenChange={(open) => !open && (setSelectedTable(null), setPendingAction(null))}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="px-4 pt-4 pb-0 md:px-6 md:pt-6 md:pb-2">
             <DialogTitle className="text-base md:text-lg">{selectedTable?.name} - Đặt món</DialogTitle>
@@ -436,10 +459,10 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
                       <span className="text-primary">{orderTotal.toLocaleString("vi-VN")}₫</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1 h-9" onClick={() => showBillPreview(false)}>
+                       <Button variant="outline" className="flex-1 h-9" onClick={() => requestAction("view")}>
                         <Eye className="mr-1.5 h-4 w-4" /> Xem bill
                       </Button>
-                      <Button className="flex-1 h-9" onClick={() => showBillPreview(true)}>
+                       <Button className="flex-1 h-9" onClick={() => requestAction("pay")}>
                         <CreditCard className="mr-1.5 h-4 w-4" /> Thanh toán
                       </Button>
                     </div>
@@ -548,10 +571,10 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
                       <span className="text-primary">{orderTotal.toLocaleString("vi-VN")}₫</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1" onClick={() => showBillPreview(false)}>
+                       <Button variant="outline" className="flex-1" onClick={() => requestAction("view")}>
                         <Eye className="mr-2 h-4 w-4" /> Xem bill
                       </Button>
-                      <Button className="flex-1" onClick={() => showBillPreview(true)}>
+                       <Button className="flex-1" onClick={() => requestAction("pay")}>
                         <CreditCard className="mr-2 h-4 w-4" /> Thanh toán
                       </Button>
                     </div>
@@ -562,6 +585,23 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!pendingAction} onOpenChange={(open) => !open && setPendingAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-accent" />
+              Còn món mới bếp chưa nhận
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Hiện còn <strong>{newItemsCount} món</strong> ở trạng thái "mới". Bạn có muốn tiếp tục {pendingAction === "pay" ? "thanh toán" : "xem hóa đơn"} không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmPendingAction}>Tiếp tục</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ReceiptPreview
         data={receiptPreview}
         open={!!receiptPreview}
