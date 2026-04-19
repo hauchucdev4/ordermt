@@ -30,6 +30,7 @@ interface KitchenViewProps {
 export default function KitchenView({ restaurantId }: KitchenViewProps) {
   const [items, setItems] = useState<KitchenItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [revertTarget, setRevertTarget] = useState<{ item: KitchenItem; to: "new" | "preparing" } | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const recentLocalUpdates = useRef<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
