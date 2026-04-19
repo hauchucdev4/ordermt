@@ -2,9 +2,19 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Undo2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
 
