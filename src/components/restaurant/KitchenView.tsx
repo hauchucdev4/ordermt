@@ -2,9 +2,19 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Undo2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
 
@@ -20,6 +30,7 @@ interface KitchenViewProps {
 export default function KitchenView({ restaurantId }: KitchenViewProps) {
   const [items, setItems] = useState<KitchenItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [revertTarget, setRevertTarget] = useState<{ item: KitchenItem; to: "new" | "preparing" } | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const recentLocalUpdates = useRef<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -108,7 +119,7 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
     };
   }, [restaurantId, fetchItems, debouncedFetch]);
 
-  const updateStatus = async (itemId: string, newStatus: "preparing" | "done") => {
+  const updateStatus = async (itemId: string, newStatus: "new" | "preparing" | "done") => {
     recentLocalUpdates.current.add(itemId);
     setItems(prev => prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i));
     await supabase.from("order_items").update({ status: newStatus }).eq("id", itemId);
@@ -144,11 +155,24 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
           </div>
         )}
       </div>
-      {action && (
-        <Button size="default" className={`kitchen-action ${theme.btn}`} onClick={() => action(item)}>
-          {item.status === "new" ? "Nhận" : "Xong"}
-        </Button>
-      )}
+      <div className="flex shrink-0 items-center gap-2">
+        {(item.status === "preparing" || item.status === "done") && (
+          <Button
+            size="icon"
+            variant="outline"
+            className="h-10 w-10"
+            title={item.status === "preparing" ? "Trả về Món mới" : "Trả về Đang làm"}
+            onClick={() => setRevertTarget({ item, to: item.status === "preparing" ? "new" : "preparing" })}
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+        )}
+        {action && (
+          <Button size="default" className={`kitchen-action ${theme.btn}`} onClick={() => action(item)}>
+            {item.status === "new" ? "Nhận" : "Xong"}
+          </Button>
+        )}
+      </div>
     </article>
   );
 
@@ -233,6 +257,34 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
         <Column title="Đang làm" emoji="🍳" items={preparingItems} action={(item) => updateStatus(item.id, "done")} theme={themes.preparing} />
         <Column title="Hoàn thành" emoji="✅" items={doneItems} theme={themes.done} />
       </div>
+
+      <AlertDialog open={!!revertTarget} onOpenChange={(open) => !open && setRevertTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận chuyển trạng thái</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              {revertTarget ? (
+                <div>
+                  Bạn có chắc muốn chuyển món <strong>{revertTarget.item.menu_item_name}</strong> ({revertTarget.item.table_name}) từ{" "}
+                  <strong>{revertTarget.item.status === "preparing" ? "Đang làm" : "Hoàn thành"}</strong> về{" "}
+                  <strong>{revertTarget.to === "new" ? "Món mới" : "Đang làm"}</strong>?
+                </div>
+              ) : <div />}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (revertTarget) updateStatus(revertTarget.item.id, revertTarget.to);
+                setRevertTarget(null);
+              }}
+            >
+              Xác nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
