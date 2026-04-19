@@ -155,13 +155,24 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
           </div>
         )}
       </div>
-      {action && (
-        <Button size="default" className={`kitchen-action ${theme.btn}`} onClick={() => action(item)}>
-          {item.status === "new" ? "Nhận" : "Xong"}
-        </Button>
-      )}
-    </article>
-  );
+      <div className="flex shrink-0 items-center gap-2">
+        {(item.status === "preparing" || item.status === "done") && (
+          <Button
+            size="icon"
+            variant="outline"
+            className="h-10 w-10"
+            title={item.status === "preparing" ? "Trả về Món mới" : "Trả về Đang làm"}
+            onClick={() => setRevertTarget({ item, to: item.status === "preparing" ? "new" : "preparing" })}
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+        )}
+        {action && (
+          <Button size="default" className={`kitchen-action ${theme.btn}`} onClick={() => action(item)}>
+            {item.status === "new" ? "Nhận" : "Xong"}
+          </Button>
+        )}
+      </div>
 
   const Column = ({ title, emoji, items: colItems, action, theme }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void; theme: { column: string; header: string; card: string; btn: string; pill: string } }) => (
     <section className={`kitchen-column ${theme.column}`}>
