@@ -32,7 +32,7 @@ export default function RestaurantRealtimeNotifier() {
     let active = true;
 
     const loadScope = async () => {
-      if (!profile || profile.role === "superadmin" || profile.role === "chef") {
+      if (!profile || profile.role === "superadmin") {
         if (active) setScope({ ids: [], names: {} });
         return;
       }
@@ -71,7 +71,7 @@ export default function RestaurantRealtimeNotifier() {
   }, [profile]);
 
   useEffect(() => {
-    if (!profile || !scope.ids.length || profile.role === "superadmin" || profile.role === "chef") {
+    if (!profile || !scope.ids.length || profile.role === "superadmin") {
       return;
     }
 
