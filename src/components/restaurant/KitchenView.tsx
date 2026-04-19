@@ -173,6 +173,8 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
           </Button>
         )}
       </div>
+    </article>
+  );
 
   const Column = ({ title, emoji, items: colItems, action, theme }: { title: string; emoji: string; items: KitchenItem[]; action?: (item: KitchenItem) => void; theme: { column: string; header: string; card: string; btn: string; pill: string } }) => (
     <section className={`kitchen-column ${theme.column}`}>
