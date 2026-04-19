@@ -119,7 +119,7 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
     };
   }, [restaurantId, fetchItems, debouncedFetch]);
 
-  const updateStatus = async (itemId: string, newStatus: "preparing" | "done") => {
+  const updateStatus = async (itemId: string, newStatus: "new" | "preparing" | "done") => {
     recentLocalUpdates.current.add(itemId);
     setItems(prev => prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i));
     await supabase.from("order_items").update({ status: newStatus }).eq("id", itemId);
