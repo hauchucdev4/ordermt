@@ -32,7 +32,7 @@ export default function RestaurantRealtimeNotifier() {
     let active = true;
 
     const loadScope = async () => {
-      if (!profile || profile.role === "superadmin" || profile.role === "chef") {
+      if (!profile || profile.role === "superadmin") {
         if (active) setScope({ ids: [], names: {} });
         return;
       }
@@ -71,7 +71,7 @@ export default function RestaurantRealtimeNotifier() {
   }, [profile]);
 
   useEffect(() => {
-    if (!profile || !scope.ids.length || profile.role === "superadmin" || profile.role === "chef") {
+    if (!profile || !scope.ids.length || profile.role === "superadmin") {
       return;
     }
 
@@ -86,7 +86,7 @@ export default function RestaurantRealtimeNotifier() {
     };
 
     const notifyStatusChange = async (itemId: string, previousStatus?: string, nextStatus?: string) => {
-      if (!itemId || !nextStatus || previousStatus === nextStatus || isKitchenScreen) return;
+      if (!itemId || !nextStatus || previousStatus === nextStatus) return;
 
       const eventKey = `${itemId}:${previousStatus ?? "unknown"}:${nextStatus}`;
       if (recentEventsRef.current.has(eventKey)) return;
@@ -106,13 +106,20 @@ export default function RestaurantRealtimeNotifier() {
       const restaurantName = scope.names[restaurantId];
 
       const description = [restaurantName, tableName, menuName].filter(Boolean).join(" • ");
-      toast(`Bếp đã cập nhật: ${STATUS_LABELS[nextStatus] || nextStatus}`, { description });
+      const statusLabel = STATUS_LABELS[nextStatus] || nextStatus;
+
+      // Always push to notification bell + play sound, regardless of current screen
       pushNotification({
         type: "update",
-        title: `Bếp: ${STATUS_LABELS[nextStatus] || nextStatus} - ${menuName}`,
+        title: `Bếp: ${statusLabel} - ${menuName}`,
         description,
       });
       playRealtimeAlert("update");
+
+      // Only show toast on non-kitchen screens to avoid noise for chef
+      if (!isKitchenScreen) {
+        toast(`Bếp đã cập nhật: ${statusLabel}`, { description });
+      }
     };
 
     const notifyNewItem = async (itemId: string) => {
