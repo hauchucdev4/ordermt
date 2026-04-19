@@ -113,9 +113,24 @@ export default function AccountSettings() {
     chef: "Đầu bếp",
   };
 
+  const backHref =
+    profile.role === "chef" ? "/chef"
+    : profile.role === "staff" ? "/staff"
+    : profile.role === "manager" ? "/manager"
+    : profile.role === "admin" ? "/admin"
+    : profile.role === "superadmin" ? "/superadmin"
+    : "/";
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-bold">Cài đặt tài khoản</h1>
+    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in p-4 md:p-0">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Cài đặt tài khoản</h1>
+        <Button asChild variant="outline" size="sm">
+          <Link to={backHref}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại
+          </Link>
+        </Button>
+      </div>
 
       <Card>
         <form onSubmit={handleSaveProfile}>
