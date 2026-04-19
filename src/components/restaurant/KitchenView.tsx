@@ -257,6 +257,34 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
         <Column title="Đang làm" emoji="🍳" items={preparingItems} action={(item) => updateStatus(item.id, "done")} theme={themes.preparing} />
         <Column title="Hoàn thành" emoji="✅" items={doneItems} theme={themes.done} />
       </div>
+
+      <AlertDialog open={!!revertTarget} onOpenChange={(open) => !open && setRevertTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận chuyển trạng thái</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              {revertTarget ? (
+                <div>
+                  Bạn có chắc muốn chuyển món <strong>{revertTarget.item.menu_item_name}</strong> ({revertTarget.item.table_name}) từ{" "}
+                  <strong>{revertTarget.item.status === "preparing" ? "Đang làm" : "Hoàn thành"}</strong> về{" "}
+                  <strong>{revertTarget.to === "new" ? "Món mới" : "Đang làm"}</strong>?
+                </div>
+              ) : <div />}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (revertTarget) updateStatus(revertTarget.item.id, revertTarget.to);
+                setRevertTarget(null);
+              }}
+            >
+              Xác nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
