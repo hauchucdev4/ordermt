@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link, Outlet } from "react-router-dom";
-import { Settings, LogOut, ChefHat } from "lucide-react";
+import { Settings, LogOut, ChefHat, ScrollText } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -20,6 +20,9 @@ export default function ChefLayout() {
           <span className="text-xs text-muted-foreground">Bếp</span>
         </div>
         <div className="flex items-center gap-1">
+        <Button asChild variant="ghost" size="sm" className="gap-2">
+          <Link to="/chef/recipes"><ScrollText className="h-4 w-4" /><span className="hidden sm:inline">Công thức</span></Link>
+        </Button>
         <NotificationBell />
         <ThemeToggle />
         <DropdownMenu>

@@ -23,6 +23,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import MyRestaurants from "./pages/admin/MyRestaurants";
 import RestaurantDetail from "./pages/admin/RestaurantDetail";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
+import AdminRecipesPage from "./pages/admin/AdminRecipesPage";
 
 // Manager
 import ManagerLayout from "./pages/manager/ManagerLayout";
@@ -39,6 +40,7 @@ import StaffOrderPage from "./pages/staff/StaffOrderPage";
 // Chef
 import ChefLayout from "./pages/chef/ChefLayout";
 import ChefKitchenPage from "./pages/chef/ChefKitchenPage";
+import ChefRecipesPage from "./pages/chef/ChefRecipesPage";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,7 @@ const App = () => (
               <Route index element={<MyRestaurants />} />
               <Route path="restaurant/:id" element={<RestaurantDetail />} />
               <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="recipes" element={<AdminRecipesPage />} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
 
@@ -92,6 +95,7 @@ const App = () => (
             {/* Chef */}
             <Route path="/chef" element={<ProtectedRoute allowedRoles={["chef"]}><ChefLayout /></ProtectedRoute>}>
               <Route index element={<ChefKitchenPage />} />
+              <Route path="recipes" element={<ChefRecipesPage />} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
 
