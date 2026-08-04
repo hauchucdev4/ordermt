@@ -38,7 +38,7 @@ import {
   Search,
 } from "lucide-react";
 import { exportRecipesExcel, parseRecipesExcel, type RecipeData } from "@/lib/recipeExcel";
-import { normalizeText } from "@/lib/searchUtils";
+import { matchSearch } from "@/lib/searchUtils";
 
 type Recipe = {
   id: string;
@@ -110,12 +110,10 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
   }, [restaurantId]);
 
   const filtered = useMemo(() => {
-    const q = normalizeText(search.trim());
+    const q = search.trim();
     if (!q) return recipes;
     return recipes.filter(
-      (r) =>
-        normalizeText(r.name).includes(q) ||
-        r.recipe_ingredients.some((i) => normalizeText(i.name).includes(q)),
+      (r) => matchSearch(r.name, q) || r.recipe_ingredients.some((i) => matchSearch(i.name, q)),
     );
   }, [recipes, search]);
 
