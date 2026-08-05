@@ -1,18 +1,32 @@
-/** DLA1 — Page: Công thức & Định lượng (Admin). Chỉ layout + chọn tenant. */
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import RecipeManagement from "@/components/restaurant/RecipeManagement";
-import { useMyRestaurants } from "@/hooks/useMyRestaurants";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 
+type Restaurant = { id: string; name: string };
+
 export default function AdminRecipesPage() {
-  const { restaurants, loading } = useMyRestaurants();
+  const { user } = useAuth();
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [selected, setSelected] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!selected && restaurants.length) setSelected(restaurants[0].id);
-  }, [restaurants, selected]);
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("restaurants")
+        .select("id, name")
+        .eq("admin_id", user.id)
+        .order("created_at");
+      setRestaurants(data ?? []);
+      if (data?.length) setSelected(data[0].id);
+      setLoading(false);
+    })();
+  }, [user]);
 
   if (loading) {
     return (

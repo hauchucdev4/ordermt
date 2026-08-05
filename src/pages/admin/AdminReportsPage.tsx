@@ -1,25 +1,32 @@
-/** ODA8 — Page: Báo cáo doanh thu (Admin). Chỉ layout + chọn tenant. */
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import RevenueReport from "@/components/restaurant/RevenueReport";
-import { useMyRestaurants } from "@/hooks/useMyRestaurants";
+import type { Database } from "@/integrations/supabase/types";
+
+type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
 
 export default function AdminReportsPage() {
-  const { restaurants, loading } = useMyRestaurants({ orderBy: "name" });
+  const { user } = useAuth();
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!selectedId && restaurants.length) setSelectedId(restaurants[0].id);
-  }, [restaurants, selectedId]);
+    if (!user) return;
+    supabase.from("restaurants").select("*").eq("admin_id", user.id).order("name")
+      .then(({ data }) => {
+        setRestaurants(data || []);
+        if (data && data.length > 0) setSelectedId(data[0].id);
+        setLoading(false);
+      });
+  }, [user]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
 
   return (
@@ -28,14 +35,10 @@ export default function AdminReportsPage() {
         <h1 className="text-2xl font-bold">Báo cáo Doanh thu</h1>
         {restaurants.length > 1 && (
           <Select value={selectedId} onValueChange={setSelectedId}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {restaurants.map((r) => (
-                <SelectItem key={r.id} value={r.id}>
-                  {r.name}
-                </SelectItem>
+              {restaurants.map(r => (
+                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>

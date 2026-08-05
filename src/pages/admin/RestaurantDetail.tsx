@@ -1,8 +1,13 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useRestaurant } from "@/hooks/useRestaurant";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
+
 import StaffManagement from "@/components/restaurant/StaffManagement";
 import MenuManagement from "@/components/restaurant/MenuManagement";
 import TableManagement from "@/components/restaurant/TableManagement";
@@ -11,9 +16,30 @@ import KitchenView from "@/components/restaurant/KitchenView";
 import BillPayment from "@/components/restaurant/BillPayment";
 import RevenueReport from "@/components/restaurant/RevenueReport";
 
+type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
+
 export default function RestaurantDetail() {
   const { id } = useParams<{ id: string }>();
-  const { restaurant, loading } = useRestaurant(id);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id || !user) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("restaurants")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) {
+        toast({ title: "Lỗi", description: "Không tìm thấy nhà hàng", variant: "destructive" });
+      }
+      setRestaurant(data);
+      setLoading(false);
+    })();
+  }, [id, user]);
 
   if (loading) {
     return (
