@@ -1,32 +1,15 @@
-import { useEffect, useState } from "react";
+/** DLA1 — Page: Công thức & Định lượng (Chef). Chỉ layout. */
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import RecipeManagement from "@/components/restaurant/RecipeManagement";
+import { useRestaurantName } from "@/hooks/useRestaurant";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 export default function ChefRecipesPage() {
   const { profile } = useAuth();
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!profile?.restaurant_id) {
-      setLoading(false);
-      return;
-    }
-    (async () => {
-      const { data } = await supabase
-        .from("restaurants")
-        .select("name")
-        .eq("id", profile.restaurant_id!)
-        .single();
-      setName(data?.name ?? "Nhà hàng");
-      setLoading(false);
-    })();
-  }, [profile?.restaurant_id]);
+  const { name, loading } = useRestaurantName(profile?.restaurant_id);
 
   if (loading) {
     return (
