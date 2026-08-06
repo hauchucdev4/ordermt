@@ -58,6 +58,8 @@ export type Database = {
       order_items: {
         Row: {
           created_at: string
+          created_by: string | null
+          created_by_name: string | null
           id: string
           menu_item_id: string
           note: string | null
@@ -67,6 +69,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
           id?: string
           menu_item_id: string
           note?: string | null
@@ -76,6 +80,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
           id?: string
           menu_item_id?: string
           note?: string | null
