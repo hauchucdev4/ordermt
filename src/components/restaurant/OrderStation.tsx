@@ -196,8 +196,10 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
       await supabase.from("tables").update({ status: "occupied" as const }).eq("id", selectedTable.id);
     }
 
+    const ordererName = profile?.full_name || profile?.email || "Không rõ";
     const items = Object.entries(cart).map(([menuId, qty]) => ({
       order_id: currentOrderId!, menu_item_id: menuId, quantity: qty, note: notes[menuId] || null,
+      created_by: profile?.id || null, created_by_name: ordererName,
     }));
 
     const { error } = await supabase.from("order_items").insert(items);
