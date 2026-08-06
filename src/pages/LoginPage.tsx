@@ -9,6 +9,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { UtensilsCrossed, Loader2 } from "lucide-react";
 
+const TEST_ACCOUNTS = [
+  { email: "superadmin1@devhub.ai.vn", password: "Lovable@2026", role: "Super Admin" },
+  { email: "user2@gmail.com", password: "Lovable@2026", role: "Admin" },
+  { email: "quanly1@gmail.com", password: "Lovable@2026", role: "Quản lý" },
+  { email: "nhanvien1@gmail.com", password: "Lovable@2026", role: "Nhân viên" },
+  { email: "testabc123@example.com", password: "Lovable@2026", role: "Nhân viên" },
+  { email: "bep1@gmail.com", password: "Lovable@2026", role: "Đầu bếp" },
+];
+
+
 export default function LoginPage() {
   const { signIn, signUp, signOut, profile, loading, user } = useAuth();
   const { toast } = useToast();
