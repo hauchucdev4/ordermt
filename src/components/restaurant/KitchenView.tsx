@@ -141,10 +141,16 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
               <span className="font-semibold truncate text-foreground">{item.menu_item_name}</span>
               <Badge className={`kitchen-pill ${theme.pill}`}>x{item.quantity}</Badge>
             </div>
-            <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
               <span className="font-medium text-foreground/80">{item.table_name}</span>
               <span>•</span>
               <span>{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
+              {item.created_by_name && (
+                <>
+                  <span>•</span>
+                  <span className="font-medium text-foreground/80">NV: {item.created_by_name}</span>
+                </>
+              )}
             </div>
           </div>
         </div>

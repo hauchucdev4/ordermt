@@ -9,7 +9,7 @@ type Order = Database["public"]["Tables"]["orders"]["Row"];
 
 interface OrderWithDetails extends Order {
   table_name?: string;
-  items?: { name: string; quantity: number; status: string }[];
+  items?: { name: string; quantity: number; status: string; orderedBy?: string | null }[];
 }
 
 export default function OrdersView({ restaurantId }: { restaurantId: string }) {
@@ -47,7 +47,7 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
     const tableMap = new Map(tablesData?.map(t => [t.id, t.name]) || []);
 
     const orderIds = ordersData.map(o => o.id);
-    const { data: orderItems } = await supabase.from("order_items").select("order_id, quantity, status, menu_item_id").in("order_id", orderIds);
+    const { data: orderItems } = await supabase.from("order_items").select("order_id, quantity, status, menu_item_id, created_by_name").in("order_id", orderIds);
 
     const menuItemIds = [...new Set(orderItems?.map(oi => oi.menu_item_id) || [])];
     const { data: menuItems } = menuItemIds.length > 0
@@ -59,7 +59,7 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
       ...o,
       table_name: tableMap.get(o.table_id) || "Bàn ?",
       items: (orderItems || []).filter(oi => oi.order_id === o.id)
-        .map(oi => ({ name: menuMap.get(oi.menu_item_id) || "?", quantity: oi.quantity, status: oi.status as string })),
+        .map(oi => ({ name: menuMap.get(oi.menu_item_id) || "?", quantity: oi.quantity, status: oi.status as string, orderedBy: oi.created_by_name })),
     })));
     setLoading(false);
     initialLoadRef.current = false;
@@ -125,7 +125,10 @@ export default function OrdersView({ restaurantId }: { restaurantId: string }) {
           <CardContent className="space-y-1">
             {o.items?.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between text-sm">
-                <span>{item.name} x{item.quantity}</span>
+                <span className="min-w-0">
+                  {item.name} x{item.quantity}
+                  {item.orderedBy && <span className="ml-1 text-xs text-muted-foreground">— NV: {item.orderedBy}</span>}
+                </span>
                 <span className="text-xs">{statusLabel(item.status)}</span>
               </div>
             ))}

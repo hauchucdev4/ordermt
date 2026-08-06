@@ -196,8 +196,10 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
       await supabase.from("tables").update({ status: "occupied" as const }).eq("id", selectedTable.id);
     }
 
+    const ordererName = profile?.full_name || profile?.email || "Không rõ";
     const items = Object.entries(cart).map(([menuId, qty]) => ({
       order_id: currentOrderId!, menu_item_id: menuId, quantity: qty, note: notes[menuId] || null,
+      created_by: profile?.id || null, created_by_name: ordererName,
     }));
 
     const { error } = await supabase.from("order_items").insert(items);
@@ -438,6 +440,9 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
                                   <span className="text-muted-foreground"> x{item.quantity}</span>
                                   <span className="text-muted-foreground ml-1.5">{((item.menu_items?.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</span>
                                   {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+                                  {item.created_by_name && (
+                                    <span className="ml-1 text-xs text-muted-foreground">— NV: {item.created_by_name}</span>
+                                  )}
                                 </div>
                                 {(status === "new" || canDeleteAll) ? (
                                   <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
@@ -550,6 +555,9 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
                                   <span className="text-muted-foreground"> x{item.quantity}</span>
                                   <span className="text-muted-foreground ml-2">{((item.menu_items?.price || 0) * item.quantity).toLocaleString("vi-VN")}đ</span>
                                   {item.note && <span className="text-xs text-muted-foreground italic ml-1">({item.note})</span>}
+                                  {item.created_by_name && (
+                                    <span className="ml-1 text-xs text-muted-foreground">— NV: {item.created_by_name}</span>
+                                  )}
                                 </div>
                                 {(status === "new" || canDeleteAll) ? (
                                   <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
