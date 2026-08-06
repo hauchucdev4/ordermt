@@ -181,6 +181,35 @@ export default function LoginPage() {
             </TabsContent>
           </Tabs>
         </Card>
+
+        <Card className="mt-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Tài khoản test</CardTitle>
+            <CardDescription>Click vào một dòng để tự điền vào form đăng nhập</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {TEST_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.email}
+                type="button"
+                onClick={() => {
+                  setLoginEmail(acc.email);
+                  setLoginPassword(acc.password);
+                  toast({ title: "Đã điền thông tin", description: `${acc.email} (${acc.role})` });
+                }}
+                className="flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-left transition-colors hover:bg-muted"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{acc.email}</p>
+                  <p className="text-xs text-muted-foreground">Mật khẩu: {acc.password}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                  {acc.role}
+                </span>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
