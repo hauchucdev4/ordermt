@@ -59,7 +59,9 @@ export default function ChefRecipesPage() {
           <p className="text-sm text-muted-foreground">{name}</p>
         </div>
       </div>
-      <RecipeManagement restaurantId={profile.restaurant_id} restaurantName={name} />
+      <RecipeManagement restaurantId={profile.restaurant_id} restaurantName={name} canEdit={false} />
+      <RecipeBatchPanel restaurantId={profile.restaurant_id} restaurantName={name} />
+
     </div>
   );
 }
