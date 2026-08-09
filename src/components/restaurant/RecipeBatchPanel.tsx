@@ -70,6 +70,7 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<BatchPrintData | null>(null);
 
   const fetchBatches = async () => {
     const { data, error } = await supabase
@@ -150,19 +151,17 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
       toast({ title: "Lỗi", description: error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Đã tạo bản thành phần món" });
+    toast({ title: "Đã lưu bản thành phần món" });
     setPickOpen(false);
     await fetchBatches();
-    printRecipeBatches(restaurantName, [
-      {
-        recipe_name: data.recipe_name,
-        quantity: Number(data.quantity),
-        note: data.note,
-        created_by_name: data.created_by_name,
-        created_at: data.created_at,
-        ingredients,
-      },
-    ]);
+    setPreview({
+      recipe_name: data.recipe_name,
+      quantity: Number(data.quantity),
+      note: data.note,
+      created_by_name: data.created_by_name,
+      created_at: data.created_at,
+      ingredients,
+    });
   };
 
   const grouped = useMemo(() => {
