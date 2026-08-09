@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import RecipeManagement from "@/components/restaurant/RecipeManagement";
+import RecipeBatchPanel from "@/components/restaurant/RecipeBatchPanel";
+
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
@@ -70,8 +72,12 @@ export default function AdminRecipesPage() {
       </div>
 
       {current && (
-        <RecipeManagement key={current.id} restaurantId={current.id} restaurantName={current.name} />
+        <>
+          <RecipeManagement key={current.id} restaurantId={current.id} restaurantName={current.name} />
+          <RecipeBatchPanel key={`b-${current.id}`} restaurantId={current.id} restaurantName={current.name} />
+        </>
       )}
+
     </div>
   );
 }

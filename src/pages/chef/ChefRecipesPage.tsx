@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import RecipeManagement from "@/components/restaurant/RecipeManagement";
+import RecipeBatchPanel from "@/components/restaurant/RecipeBatchPanel";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -59,7 +61,9 @@ export default function ChefRecipesPage() {
           <p className="text-sm text-muted-foreground">{name}</p>
         </div>
       </div>
-      <RecipeManagement restaurantId={profile.restaurant_id} restaurantName={name} />
+      <RecipeManagement restaurantId={profile.restaurant_id} restaurantName={name} canEdit={false} />
+      <RecipeBatchPanel restaurantId={profile.restaurant_id} restaurantName={name} />
+
     </div>
   );
 }

@@ -198,6 +198,60 @@ export type Database = {
           },
         ]
       }
+      recipe_batches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          id: string
+          ingredients: Json
+          note: string | null
+          quantity: number
+          recipe_id: string | null
+          recipe_name: string
+          restaurant_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          ingredients?: Json
+          note?: string | null
+          quantity?: number
+          recipe_id?: string | null
+          recipe_name: string
+          restaurant_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          ingredients?: Json
+          note?: string | null
+          quantity?: number
+          recipe_id?: string | null
+          recipe_name?: string
+          restaurant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_batches_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_batches_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_ingredients: {
         Row: {
           amount: number

@@ -281,10 +281,13 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
             className="pl-9"
           />
         </div>
-        <Button variant="outline" onClick={handleExport}>
-          <FileSpreadsheet className="mr-2 h-4 w-4" /> Xuất Excel
-        </Button>
         {canEdit && (
+          <Button variant="outline" onClick={handleExport}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> Xuất Excel
+          </Button>
+        )}
+        {canEdit && (
+
           <>
             <input
               ref={fileRef}
