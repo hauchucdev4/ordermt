@@ -70,8 +70,12 @@ export default function AdminRecipesPage() {
       </div>
 
       {current && (
-        <RecipeManagement key={current.id} restaurantId={current.id} restaurantName={current.name} />
+        <>
+          <RecipeManagement key={current.id} restaurantId={current.id} restaurantName={current.name} />
+          <RecipeBatchPanel key={`b-${current.id}`} restaurantId={current.id} restaurantName={current.name} />
+        </>
       )}
+
     </div>
   );
 }
