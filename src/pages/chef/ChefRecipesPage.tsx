@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import RecipeManagement from "@/components/restaurant/RecipeManagement";
+import RecipeBatchPanel from "@/components/restaurant/RecipeBatchPanel";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
