@@ -29,7 +29,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ClipboardList, History, Loader2, Printer, Search, Trash2 } from "lucide-react";
 import { matchSearch } from "@/lib/searchUtils";
-import { printRecipeBatches, type BatchIngredient } from "@/lib/printRecipeBatches";
+import { printRecipeBatches, type BatchIngredient, type BatchPrintData } from "@/lib/printRecipeBatches";
 
 type Recipe = {
   id: string;
