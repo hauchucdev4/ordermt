@@ -29,7 +29,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ClipboardList, History, Loader2, Printer, Search, Trash2 } from "lucide-react";
 import { matchSearch } from "@/lib/searchUtils";
-import { printRecipeBatches, type BatchIngredient } from "@/lib/printRecipeBatches";
+import { printRecipeBatches, type BatchIngredient, type BatchPrintData } from "@/lib/printRecipeBatches";
 
 type Recipe = {
   id: string;
@@ -70,6 +70,7 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<BatchPrintData | null>(null);
 
   const fetchBatches = async () => {
     const { data, error } = await supabase
@@ -150,19 +151,17 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
       toast({ title: "Lỗi", description: error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Đã tạo bản thành phần món" });
+    toast({ title: "Đã lưu bản thành phần món" });
     setPickOpen(false);
     await fetchBatches();
-    printRecipeBatches(restaurantName, [
-      {
-        recipe_name: data.recipe_name,
-        quantity: Number(data.quantity),
-        note: data.note,
-        created_by_name: data.created_by_name,
-        created_at: data.created_at,
-        ingredients,
-      },
-    ]);
+    setPreview({
+      recipe_name: data.recipe_name,
+      quantity: Number(data.quantity),
+      note: data.note,
+      created_by_name: data.created_by_name,
+      created_at: data.created_at,
+      ingredients,
+    });
   };
 
   const grouped = useMemo(() => {
@@ -233,7 +232,7 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
           {grouped.map(([day, items]) => (
             <div key={day} className="space-y-2">
               <p className="text-sm font-semibold text-muted-foreground">Ngày {day}</p>
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="flex flex-col gap-2">
                 {items.map((b) => (
                   <Card key={b.id} className="flex items-start gap-3 p-3">
                     <Checkbox
@@ -409,11 +408,63 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
               Hủy bỏ
             </Button>
             <Button onClick={saveBatch} disabled={!picked || saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu &amp; In
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Preview dialog after saving */}
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Xem trước bản thành phần</DialogTitle>
+            <DialogDescription>
+              {preview
+                ? `${preview.recipe_name} × ${preview.quantity} phần — ${preview.created_by_name || "Không rõ"}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {preview && (
+            <div className="space-y-3">
+              {preview.note && <p className="text-sm text-muted-foreground">Ghi chú: {preview.note}</p>}
+              <div className="max-h-[50vh] overflow-y-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nguyên vật liệu</TableHead>
+                      <TableHead className="text-right">Định mức/phần</TableHead>
+                      <TableHead className="text-right">Tổng cần</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {preview.ingredients.map((i, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{i.name}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {i.amount} {i.unit}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-primary">
+                          {i.total} {i.unit}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreview(null)}>
+              Đóng
+            </Button>
+            <Button onClick={() => preview && printRecipeBatches(restaurantName, [preview])}>
+              <Printer className="mr-2 h-4 w-4" /> In A4
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
