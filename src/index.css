@@ -360,3 +360,23 @@
     @apply py-8 text-center text-xs italic text-muted-foreground;
   }
 }
+
+@layer components {
+  /* HyperOS-style circular icon holders */
+  .pix-icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full;
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+  }
+
+  .pix-icon--accent {
+    background: hsl(var(--accent) / 0.16);
+    color: hsl(var(--accent));
+  }
+
+  .pix-nav-icon {
+    @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors;
+    background: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-primary));
+  }
+}
