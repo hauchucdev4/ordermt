@@ -64,12 +64,15 @@ function SidebarNav({ navItems, title }: { navItems: NavItem[]; title: string })
                     <NavLink
                       to={item.url}
                       end={item.url.split("/").length <= 2}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      className="flex items-center gap-3 rounded-full px-2 py-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
                     >
-                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="pix-nav-icon">
+                        <item.icon className="h-4 w-4" />
+                      </span>
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
+
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
