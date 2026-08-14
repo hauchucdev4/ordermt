@@ -15,10 +15,13 @@ export default function StaffLayout() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card/80 backdrop-blur-lg px-4">
         <div className="flex items-center gap-2">
-          <UtensilsCrossed className="h-5 w-5 text-accent" />
+          <span className="pix-icon">
+            <UtensilsCrossed className="h-5 w-5" />
+          </span>
           <span className="font-bold text-foreground">OrderMaster</span>
           <span className="text-xs text-muted-foreground">Staff</span>
         </div>
+
         <div className="flex items-center gap-1">
         <NotificationBell />
         <ThemeToggle />
