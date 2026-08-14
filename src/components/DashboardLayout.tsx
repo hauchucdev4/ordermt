@@ -47,9 +47,12 @@ function SidebarNav({ navItems, title }: { navItems: NavItem[]; title: string })
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-        <UtensilsCrossed className="h-6 w-6 shrink-0 text-sidebar-primary" />
+        <span className="pix-nav-icon h-9 w-9">
+          <UtensilsCrossed className="h-5 w-5" />
+        </span>
         {!collapsed && <span className="font-bold text-sidebar-foreground truncate">OrderMaster</span>}
       </div>
+
       <SidebarContent>
         <SidebarGroup>
           {!collapsed && <SidebarGroupLabel className="text-sidebar-foreground/60 text-xs uppercase tracking-wider">{title}</SidebarGroupLabel>}
