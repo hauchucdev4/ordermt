@@ -6,121 +6,124 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 25% 10%;
+    /* Pix Green — HyperOS light */
+    --background: 140 30% 96%;
+    --foreground: 155 30% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 155 30% 12%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
+    --popover: 140 25% 99%;
+    --popover-foreground: 155 30% 12%;
 
-    --primary: 220 70% 45%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 152 48% 38%;
+    --primary-foreground: 140 60% 97%;
 
-    --secondary: 210 25% 93%;
-    --secondary-foreground: 220 25% 15%;
+    --secondary: 145 40% 90%;
+    --secondary-foreground: 155 35% 18%;
 
-    --muted: 210 20% 95%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 145 25% 93%;
+    --muted-foreground: 155 12% 42%;
 
-    --accent: 25 95% 55%;
-    --accent-foreground: 0 0% 100%;
+    /* Pix Purple accent */
+    --accent: 265 60% 60%;
+    --accent-foreground: 270 70% 98%;
 
-    --success: 155 65% 40%;
+    --success: 152 55% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 40 95% 55%;
+    --warning: 42 92% 55%;
     --warning-foreground: 30 80% 15%;
 
-    --destructive: 0 72% 55%;
+    --destructive: 355 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 25% 90%;
-    --input: 214 25% 90%;
-    --ring: 220 70% 45%;
+    --border: 145 22% 87%;
+    --input: 145 22% 87%;
+    --ring: 152 48% 45%;
 
-    --radius: 0.75rem;
+    --radius: 1.5rem;
 
-    --sidebar-background: 222 35% 15%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 25 95% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 30% 20%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 222 25% 22%;
-    --sidebar-ring: 220 70% 50%;
+    --sidebar-background: 152 30% 14%;
+    --sidebar-foreground: 145 25% 88%;
+    --sidebar-primary: 148 60% 62%;
+    --sidebar-primary-foreground: 155 40% 10%;
+    --sidebar-accent: 152 26% 20%;
+    --sidebar-accent-foreground: 145 30% 92%;
+    --sidebar-border: 152 22% 24%;
+    --sidebar-ring: 148 60% 62%;
 
-    --chart-1: 220 70% 45%;
-    --chart-2: 25 95% 55%;
-    --chart-3: 155 65% 40%;
-    --chart-4: 280 60% 55%;
-    --chart-5: 340 70% 55%;
+    --chart-1: 152 48% 42%;
+    --chart-2: 265 60% 60%;
+    --chart-3: 148 60% 62%;
+    --chart-4: 285 45% 52%;
+    --chart-5: 175 45% 45%;
 
-    --kitchen-new: 24 95% 55%;
-    --kitchen-new-soft: 28 100% 96%;
-    --kitchen-preparing: 214 86% 56%;
-    --kitchen-preparing-soft: 210 100% 97%;
-    --kitchen-done: 155 65% 40%;
-    --kitchen-done-soft: 155 60% 95%;
-    --kitchen-note-bg: 41 100% 96%;
-    --kitchen-note-border: 36 92% 56%;
-    --kitchen-note-foreground: 28 72% 22%;
+    --kitchen-new: 265 60% 58%;
+    --kitchen-new-soft: 265 70% 96%;
+    --kitchen-preparing: 42 92% 52%;
+    --kitchen-preparing-soft: 45 95% 95%;
+    --kitchen-done: 152 52% 40%;
+    --kitchen-done-soft: 148 55% 94%;
+    --kitchen-note-bg: 265 70% 96%;
+    --kitchen-note-border: 265 60% 62%;
+    --kitchen-note-foreground: 268 55% 32%;
   }
 
   .dark {
-    --background: 222 35% 8%;
-    --foreground: 210 20% 92%;
+    /* Pix Green — HyperOS dark */
+    --background: 150 18% 6%;
+    --foreground: 145 35% 92%;
 
-    --card: 222 30% 12%;
-    --card-foreground: 210 20% 92%;
+    --card: 152 16% 10%;
+    --card-foreground: 145 35% 92%;
 
-    --popover: 222 30% 12%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 152 16% 11%;
+    --popover-foreground: 145 35% 92%;
 
-    --primary: 220 70% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 148 58% 58%;
+    --primary-foreground: 155 40% 8%;
 
-    --secondary: 222 25% 18%;
-    --secondary-foreground: 210 20% 85%;
+    --secondary: 152 14% 16%;
+    --secondary-foreground: 145 30% 88%;
 
-    --muted: 222 25% 16%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 152 12% 15%;
+    --muted-foreground: 148 12% 62%;
 
-    --accent: 25 95% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 265 70% 72%;
+    --accent-foreground: 268 60% 12%;
 
-    --success: 155 60% 45%;
-    --success-foreground: 0 0% 100%;
+    --success: 148 55% 55%;
+    --success-foreground: 155 40% 8%;
 
-    --warning: 40 90% 55%;
-    --warning-foreground: 30 80% 15%;
+    --warning: 42 88% 60%;
+    --warning-foreground: 30 80% 12%;
 
-    --destructive: 0 65% 50%;
+    --destructive: 355 65% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 25% 20%;
-    --input: 222 25% 20%;
-    --ring: 220 70% 55%;
+    --border: 152 12% 18%;
+    --input: 152 12% 18%;
+    --ring: 148 58% 58%;
 
-    --sidebar-background: 222 40% 8%;
-    --sidebar-foreground: 210 20% 80%;
-    --sidebar-primary: 25 95% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 35% 14%;
-    --sidebar-accent-foreground: 210 20% 85%;
-    --sidebar-border: 222 30% 15%;
-    --sidebar-ring: 220 70% 55%;
+    --sidebar-background: 152 20% 8%;
+    --sidebar-foreground: 145 25% 85%;
+    --sidebar-primary: 148 60% 62%;
+    --sidebar-primary-foreground: 155 40% 8%;
+    --sidebar-accent: 152 16% 14%;
+    --sidebar-accent-foreground: 145 30% 90%;
+    --sidebar-border: 152 14% 16%;
+    --sidebar-ring: 148 60% 62%;
 
-    --kitchen-new: 24 92% 62%;
-    --kitchen-new-soft: 24 40% 15%;
-    --kitchen-preparing: 214 90% 67%;
-    --kitchen-preparing-soft: 214 42% 16%;
-    --kitchen-done: 155 62% 52%;
-    --kitchen-done-soft: 155 35% 15%;
-    --kitchen-note-bg: 36 50% 16%;
-    --kitchen-note-border: 38 88% 60%;
-    --kitchen-note-foreground: 42 90% 82%;
+    --kitchen-new: 265 75% 76%;
+    --kitchen-new-soft: 265 30% 16%;
+    --kitchen-preparing: 42 88% 62%;
+    --kitchen-preparing-soft: 42 30% 15%;
+    --kitchen-done: 148 55% 55%;
+    --kitchen-done-soft: 150 28% 14%;
+    --kitchen-note-bg: 265 30% 17%;
+    --kitchen-note-border: 265 65% 70%;
+    --kitchen-note-foreground: 268 70% 88%;
   }
 }
 
@@ -131,14 +134,68 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(hsl(var(--primary) / 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-card/80 backdrop-blur-lg border border-border/50;
+    @apply bg-card/70 backdrop-blur-xl border border-border/50;
   }
 }
+
+/* HyperOS / Pix pill-shaped system styling */
+@layer components {
+  button,
+  [role="tab"],
+  .btn-pill {
+    border-radius: 9999px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select,
+  [role="combobox"] {
+    border-radius: 1.25rem !important;
+  }
+
+  textarea {
+    border-radius: 1.25rem !important;
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0 0.4rem;
+  }
+
+  table thead th {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.7rem;
+  }
+
+  table tbody tr {
+    background: hsl(var(--secondary) / 0.5);
+    border-bottom: 0 !important;
+  }
+
+  table tbody tr > td:first-child {
+    border-top-left-radius: 1.1rem;
+    border-bottom-left-radius: 1.1rem;
+  }
+
+  table tbody tr > td:last-child {
+    border-top-right-radius: 1.1rem;
+    border-bottom-right-radius: 1.1rem;
+  }
+
+  table tbody tr:hover {
+    background: hsl(var(--primary) / 0.12);
+  }
+}
+
 
 @layer components {
   .kitchen-shell {
@@ -301,5 +358,25 @@
 
   .kitchen-empty {
     @apply py-8 text-center text-xs italic text-muted-foreground;
+  }
+}
+
+@layer components {
+  /* HyperOS-style circular icon holders */
+  .pix-icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full;
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+  }
+
+  .pix-icon--accent {
+    background: hsl(var(--accent) / 0.16);
+    color: hsl(var(--accent));
+  }
+
+  .pix-nav-icon {
+    @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors;
+    background: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-primary));
   }
 }

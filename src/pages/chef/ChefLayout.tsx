@@ -15,10 +15,13 @@ export default function ChefLayout() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card/80 backdrop-blur-lg px-4">
         <div className="flex items-center gap-2">
-          <ChefHat className="h-5 w-5 text-accent" />
+          <span className="pix-icon pix-icon--accent">
+            <ChefHat className="h-5 w-5" />
+          </span>
           <span className="font-bold text-foreground">OrderMaster</span>
           <span className="text-xs text-muted-foreground">Bếp</span>
         </div>
+
         <div className="flex items-center gap-1">
         <Button asChild variant="ghost" size="sm" className="gap-2">
           <Link to="/chef/recipes"><ScrollText className="h-4 w-4" /><span className="hidden sm:inline">Công thức</span></Link>
