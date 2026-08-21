@@ -15,15 +15,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Store, MapPin, Loader2, Trash2, Edit } from "lucide-react";
+import { Plus, Store, MapPin, Loader2, Trash2, Edit, History, RotateCcw } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
-type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
+type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"] & { deleted_at?: string | null };
+
+const RETENTION_DAYS = 15;
 
 export default function MyRestaurants() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [deletedList, setDeletedList] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -35,19 +38,26 @@ export default function MyRestaurants() {
   const [editName, setEditName] = useState("");
   const [editAddress, setEditAddress] = useState("");
 
+  const [deleteTarget, setDeleteTarget] = useState<Restaurant | null>(null);
+  const [confirmText, setConfirmText] = useState("");
+
   const fetchRestaurants = async () => {
     if (!user) return;
     setLoading(true);
+    await supabase.rpc("purge_expired_restaurants");
     const { data } = await supabase
       .from("restaurants")
       .select("*")
       .eq("admin_id", user.id)
       .order("created_at", { ascending: false });
-    setRestaurants(data || []);
+    const all = (data || []) as Restaurant[];
+    setRestaurants(all.filter((r) => !r.deleted_at));
+    setDeletedList(all.filter((r) => !!r.deleted_at));
     setLoading(false);
   };
 
   useEffect(() => { fetchRestaurants(); }, [user]);
+
 
   const handleCreate = async () => {
     if (!user || !name.trim()) return;
