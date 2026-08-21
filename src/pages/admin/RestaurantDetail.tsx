@@ -15,15 +15,18 @@ import OrderStation from "@/components/restaurant/OrderStation";
 import KitchenView from "@/components/restaurant/KitchenView";
 import BillPayment from "@/components/restaurant/BillPayment";
 import RevenueReport from "@/components/restaurant/RevenueReport";
+import ExcelImportDialog from "@/components/restaurant/ExcelImportDialog";
 
 type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
 
 export default function RestaurantDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
 
   useEffect(() => {
     if (!id || !user) return;
@@ -60,18 +63,26 @@ export default function RestaurantDetail() {
     );
   }
 
+  const canImport = profile?.role === "admin" || profile?.role === "superadmin";
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="icon">
           <Link to="/admin"><ArrowLeft className="h-4 w-4" /></Link>
         </Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold">{restaurant.name}</h1>
           {restaurant.address && (
             <p className="text-sm text-muted-foreground">{restaurant.address}</p>
           )}
         </div>
+        {canImport && (
+          <ExcelImportDialog
+            restaurantId={restaurant.id}
+            onImported={() => setRefreshKey((k) => k + 1)}
+          />
+        )}
       </div>
 
       <Tabs defaultValue="order" className="w-full">
@@ -95,10 +106,10 @@ export default function RestaurantDetail() {
           <BillPayment restaurantId={restaurant.id} restaurantName={restaurant.name} />
         </TabsContent>
         <TabsContent value="menu" className="mt-4">
-          <MenuManagement restaurantId={restaurant.id} />
+          <MenuManagement key={`menu-${refreshKey}`} restaurantId={restaurant.id} />
         </TabsContent>
         <TabsContent value="tables" className="mt-4">
-          <TableManagement restaurantId={restaurant.id} />
+          <TableManagement key={`tables-${refreshKey}`} restaurantId={restaurant.id} />
         </TabsContent>
         <TabsContent value="staff" className="mt-4">
           <StaffManagement restaurantId={restaurant.id} />
