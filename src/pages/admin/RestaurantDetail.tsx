@@ -106,10 +106,10 @@ export default function RestaurantDetail() {
           <BillPayment restaurantId={restaurant.id} restaurantName={restaurant.name} />
         </TabsContent>
         <TabsContent value="menu" className="mt-4">
-          <MenuManagement restaurantId={restaurant.id} />
+          <MenuManagement key={`menu-${refreshKey}`} restaurantId={restaurant.id} />
         </TabsContent>
         <TabsContent value="tables" className="mt-4">
-          <TableManagement restaurantId={restaurant.id} />
+          <TableManagement key={`tables-${refreshKey}`} restaurantId={restaurant.id} />
         </TabsContent>
         <TabsContent value="staff" className="mt-4">
           <StaffManagement restaurantId={restaurant.id} />
