@@ -15,15 +15,18 @@ import OrderStation from "@/components/restaurant/OrderStation";
 import KitchenView from "@/components/restaurant/KitchenView";
 import BillPayment from "@/components/restaurant/BillPayment";
 import RevenueReport from "@/components/restaurant/RevenueReport";
+import ExcelImportDialog from "@/components/restaurant/ExcelImportDialog";
 
 type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
 
 export default function RestaurantDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
 
   useEffect(() => {
     if (!id || !user) return;
