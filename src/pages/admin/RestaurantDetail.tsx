@@ -60,18 +60,26 @@ export default function RestaurantDetail() {
     );
   }
 
+  const canImport = profile?.role === "admin" || profile?.role === "superadmin";
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="icon">
           <Link to="/admin"><ArrowLeft className="h-4 w-4" /></Link>
         </Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold">{restaurant.name}</h1>
           {restaurant.address && (
             <p className="text-sm text-muted-foreground">{restaurant.address}</p>
           )}
         </div>
+        {canImport && (
+          <ExcelImportDialog
+            restaurantId={restaurant.id}
+            onImported={() => setRefreshKey((k) => k + 1)}
+          />
+        )}
       </div>
 
       <Tabs defaultValue="order" className="w-full">
