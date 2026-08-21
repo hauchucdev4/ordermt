@@ -96,12 +96,42 @@ export default function MyRestaurants() {
     }
   };
 
-  const handleDelete = async (r: Restaurant) => {
-    if (!confirm(`Xóa nhà hàng "${r.name}"?`)) return;
-    await supabase.from("restaurants").delete().eq("id", r.id);
-    toast({ title: "Đã xóa nhà hàng" });
+  const handleDelete = async () => {
+    if (!deleteTarget || confirmText.trim().toUpperCase() !== "YES") return;
+    setSubmitting(true);
+    const { error } = await supabase
+      .from("restaurants")
+      .update({ deleted_at: new Date().toISOString() } as never)
+      .eq("id", deleteTarget.id);
+    setSubmitting(false);
+    if (error) {
+      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Đã xóa nhà hàng", description: `Có thể khôi phục trong ${RETENTION_DAYS} ngày` });
+    setDeleteTarget(null);
+    setConfirmText("");
     fetchRestaurants();
   };
+
+  const handleRestore = async (r: Restaurant) => {
+    const { error } = await supabase
+      .from("restaurants")
+      .update({ deleted_at: null } as never)
+      .eq("id", r.id);
+    if (error) {
+      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Đã khôi phục nhà hàng" });
+    fetchRestaurants();
+  };
+
+  const daysLeft = (deletedAt: string) => {
+    const ms = new Date(deletedAt).getTime() + RETENTION_DAYS * 86400000 - Date.now();
+    return Math.max(0, Math.ceil(ms / 86400000));
+  };
+
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
