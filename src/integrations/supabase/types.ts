@@ -327,6 +327,7 @@ export type Database = {
           address: string | null
           admin_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           name: string
         }
@@ -334,6 +335,7 @@ export type Database = {
           address?: string | null
           admin_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name: string
         }
@@ -341,6 +343,7 @@ export type Database = {
           address?: string | null
           admin_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name?: string
         }
@@ -404,6 +407,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      purge_expired_restaurants: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "superadmin" | "admin" | "manager" | "staff" | "chef"
