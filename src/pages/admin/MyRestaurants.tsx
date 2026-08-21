@@ -15,15 +15,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Store, MapPin, Loader2, Trash2, Edit } from "lucide-react";
+import { Plus, Store, MapPin, Loader2, Trash2, Edit, History, RotateCcw } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
-type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
+type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"] & { deleted_at?: string | null };
+
+const RETENTION_DAYS = 15;
 
 export default function MyRestaurants() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [deletedList, setDeletedList] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -35,19 +38,26 @@ export default function MyRestaurants() {
   const [editName, setEditName] = useState("");
   const [editAddress, setEditAddress] = useState("");
 
+  const [deleteTarget, setDeleteTarget] = useState<Restaurant | null>(null);
+  const [confirmText, setConfirmText] = useState("");
+
   const fetchRestaurants = async () => {
     if (!user) return;
     setLoading(true);
+    await supabase.rpc("purge_expired_restaurants");
     const { data } = await supabase
       .from("restaurants")
       .select("*")
       .eq("admin_id", user.id)
       .order("created_at", { ascending: false });
-    setRestaurants(data || []);
+    const all = (data || []) as Restaurant[];
+    setRestaurants(all.filter((r) => !r.deleted_at));
+    setDeletedList(all.filter((r) => !!r.deleted_at));
     setLoading(false);
   };
 
   useEffect(() => { fetchRestaurants(); }, [user]);
+
 
   const handleCreate = async () => {
     if (!user || !name.trim()) return;
@@ -86,12 +96,42 @@ export default function MyRestaurants() {
     }
   };
 
-  const handleDelete = async (r: Restaurant) => {
-    if (!confirm(`Xóa nhà hàng "${r.name}"?`)) return;
-    await supabase.from("restaurants").delete().eq("id", r.id);
-    toast({ title: "Đã xóa nhà hàng" });
+  const handleDelete = async () => {
+    if (!deleteTarget || confirmText.trim().toUpperCase() !== "YES") return;
+    setSubmitting(true);
+    const { error } = await supabase
+      .from("restaurants")
+      .update({ deleted_at: new Date().toISOString() } as never)
+      .eq("id", deleteTarget.id);
+    setSubmitting(false);
+    if (error) {
+      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Đã xóa nhà hàng", description: `Có thể khôi phục trong ${RETENTION_DAYS} ngày` });
+    setDeleteTarget(null);
+    setConfirmText("");
     fetchRestaurants();
   };
+
+  const handleRestore = async (r: Restaurant) => {
+    const { error } = await supabase
+      .from("restaurants")
+      .update({ deleted_at: null } as never)
+      .eq("id", r.id);
+    if (error) {
+      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Đã khôi phục nhà hàng" });
+    fetchRestaurants();
+  };
+
+  const daysLeft = (deletedAt: string) => {
+    const ms = new Date(deletedAt).getTime() + RETENTION_DAYS * 86400000 - Date.now();
+    return Math.max(0, Math.ceil(ms / 86400000));
+  };
+
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
@@ -164,7 +204,7 @@ export default function MyRestaurants() {
                 <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); setEditTarget(r); setEditName(r.name); setEditAddress(r.address || ""); setEditOpen(true); }}>
                   <Edit className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); handleDelete(r); }}>
+                <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); setDeleteTarget(r); setConfirmText(""); }}>
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
@@ -172,6 +212,64 @@ export default function MyRestaurants() {
           ))}
         </div>
       )}
+
+      {deletedList.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <History className="h-4 w-4 text-muted-foreground" />
+              Lịch sử nhà hàng đã xóa
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Có thể khôi phục trong {RETENTION_DAYS} ngày, sau đó tự xóa vĩnh viễn.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {deletedList.map((r) => (
+              <div key={r.id} className="flex items-center justify-between gap-3 rounded-2xl border p-3">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{r.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Xóa: {new Date(r.deleted_at!).toLocaleString("vi-VN")} · Còn {daysLeft(r.deleted_at!)} ngày
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => handleRestore(r)}>
+                  <RotateCcw className="mr-2 h-4 w-4" /> Khôi phục
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Delete confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setConfirmText(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xóa nhà hàng "{deleteTarget?.name}"?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Nhà hàng sẽ được lưu ở lịch sử và có thể khôi phục trong {RETENTION_DAYS} ngày, sau đó xóa vĩnh viễn.
+            </p>
+            <div className="space-y-2">
+              <Label>Nhập <span className="font-bold">YES</span> để xác nhận</Label>
+              <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="YES" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteTarget(null); setConfirmText(""); }}>Hủy bỏ</Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={submitting || confirmText.trim().toUpperCase() !== "YES"}
+            >
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Xác nhận xóa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Restaurant Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
