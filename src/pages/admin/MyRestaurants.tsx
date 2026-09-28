@@ -23,7 +23,8 @@ type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"] & { deleted
 const RETENTION_DAYS = 15;
 
 export default function MyRestaurants() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const maxAllowed = (profile as { max_restaurants?: number } | null)?.max_restaurants ?? 2;
   const { toast } = useToast();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [deletedList, setDeletedList] = useState<Restaurant[]>([]);
@@ -140,10 +141,16 @@ export default function MyRestaurants() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Nhà hàng của tôi</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Nhà hàng của tôi</h1>
+          <p className="text-xs text-muted-foreground">Đã dùng {restaurants.length}/{maxAllowed} nhà hàng</p>
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Thêm nhà hàng</Button>
+            <Button
+              disabled={restaurants.length >= maxAllowed}
+              title={restaurants.length >= maxAllowed ? "Đã đạt giới hạn, liên hệ superadmin để mở thêm" : "Thêm nhà hàng"}
+            ><Plus className="mr-2 h-4 w-4" /> Thêm nhà hàng</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

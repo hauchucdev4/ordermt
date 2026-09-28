@@ -159,6 +159,7 @@ export type Database = {
           full_name: string | null
           id: string
           lock_until: string | null
+          max_restaurants: number
           phone: string | null
           restaurant_id: string | null
           role: Database["public"]["Enums"]["app_role"]
@@ -171,6 +172,7 @@ export type Database = {
           full_name?: string | null
           id: string
           lock_until?: string | null
+          max_restaurants?: number
           phone?: string | null
           restaurant_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -183,6 +185,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           lock_until?: string | null
+          max_restaurants?: number
           phone?: string | null
           restaurant_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]

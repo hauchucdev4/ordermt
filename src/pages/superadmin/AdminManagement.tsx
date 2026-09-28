@@ -43,13 +43,18 @@ export default function AdminManagement() {
   // Impersonate state
   const [impersonating, setImpersonating] = useState<Profile | null>(null);
 
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [editMax, setEditMax] = useState("2");
+
   const fetchAdmins = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("role", "admin")
-      .order("created_at", { ascending: false });
+    const [{ data }, { data: rs }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("role", "admin").order("created_at", { ascending: false }),
+      supabase.from("restaurants").select("admin_id, deleted_at"),
+    ]);
+    const c: Record<string, number> = {};
+    (rs || []).forEach((r: any) => { if (!r.deleted_at) c[r.admin_id] = (c[r.admin_id] || 0) + 1; });
+    setCounts(c);
     setAdmins(data || []);
     setLoading(false);
   };
@@ -96,10 +101,13 @@ export default function AdminManagement() {
 
   const handleEdit = async () => {
     if (!editAdmin) return;
+    const max = parseInt(editMax, 10);
+    if (isNaN(max) || max < 0) { toast({ title: "Lỗi", description: "Số nhà hàng không hợp lệ", variant: "destructive" }); return; }
     setSubmitting(true);
-    await supabase.from("profiles").update({ full_name: editName, email: editEmail }).eq("id", editAdmin.id);
-    toast({ title: "Đã cập nhật thông tin" });
+    const { error } = await supabase.from("profiles").update({ full_name: editName, email: editEmail, max_restaurants: max }).eq("id", editAdmin.id);
     setSubmitting(false);
+    if (error) { toast({ title: "Lỗi", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Đã cập nhật thông tin" });
     setEditAdmin(null);
     fetchAdmins();
   };
@@ -176,43 +184,45 @@ export default function AdminManagement() {
               <TableHead>Họ tên</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Trạng thái</TableHead>
+              <TableHead>Nhà hàng</TableHead>
               <TableHead>Ngày tạo</TableHead>
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" /></TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Không tìm thấy admin nào</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Không tìm thấy admin nào</TableCell></TableRow>
             ) : (
               filtered.map((admin) => (
                 <TableRow key={admin.id}>
                   <TableCell className="font-medium">{admin.full_name}</TableCell>
                   <TableCell>{admin.email}</TableCell>
                   <TableCell>{statusBadge(admin.status)}</TableCell>
+                  <TableCell>{counts[admin.id] ?? 0}/{admin.max_restaurants ?? 2}</TableCell>
                   <TableCell>{new Date(admin.created_at).toLocaleDateString("vi-VN")}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="Xem với tư cách admin" onClick={() => setImpersonating(admin)}>
+                      <Button variant="ghost" size="icon" title="Xem với tư cách admin" aria-label="Xem với tư cách admin" onClick={() => setImpersonating(admin)}>
                         <Eye className="h-4 w-4 text-primary" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditAdmin(admin); setEditName(admin.full_name || ""); setEditEmail(admin.email); }}>
+                      <Button variant="ghost" size="icon" title="Chỉnh sửa admin" aria-label="Chỉnh sửa admin" onClick={() => { setEditAdmin(admin); setEditName(admin.full_name || ""); setEditEmail(admin.email); setEditMax(String(admin.max_restaurants ?? 2)); }}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => { setResetAdmin(admin); setResetPw(""); setResetConfirm(""); }}>
+                      <Button variant="ghost" size="icon" title="Đổi mật khẩu" aria-label="Đổi mật khẩu" onClick={() => { setResetAdmin(admin); setResetPw(""); setResetConfirm(""); }}>
                         <KeyRound className="h-4 w-4" />
                       </Button>
                       {admin.status === "locked" ? (
-                        <Button variant="ghost" size="icon" onClick={() => { setUnlockAdmin(admin); setUnlockType("permanent"); setUnlockDate(""); }}>
+                        <Button variant="ghost" size="icon" title="Mở khóa admin" aria-label="Mở khóa admin" onClick={() => { setUnlockAdmin(admin); setUnlockType("permanent"); setUnlockDate(""); }}>
                           <Unlock className="h-4 w-4 text-success" />
                         </Button>
                       ) : (
-                        <Button variant="ghost" size="icon" onClick={() => handleLock(admin)} disabled={submitting}>
+                        <Button variant="ghost" size="icon" title="Khóa admin" aria-label="Khóa admin" onClick={() => handleLock(admin)} disabled={submitting}>
                           <Lock className="h-4 w-4 text-warning" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(admin)}>
+                      <Button variant="ghost" size="icon" title="Xóa admin" aria-label="Xóa admin" onClick={() => handleDelete(admin)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -231,6 +241,11 @@ export default function AdminManagement() {
           <div className="space-y-4">
             <div className="space-y-2"><Label>Họ tên</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
             <div className="space-y-2"><Label>Email</Label><Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} /></div>
+            <div className="space-y-2">
+              <Label>Số nhà hàng tối đa</Label>
+              <Input type="number" min={0} value={editMax} onChange={(e) => setEditMax(e.target.value)} />
+              <p className="text-xs text-muted-foreground">Mặc định 2. Đang có {editAdmin ? counts[editAdmin.id] ?? 0 : 0} nhà hàng.</p>
+            </div>
           </div>
           <DialogFooter>
             <Button onClick={handleEdit} disabled={submitting}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu</Button>

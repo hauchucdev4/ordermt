@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790616472539,
+      "tag": "0000_admin_restaurant_limit",
+      "breakpoints": true
+    }
+  ]
+}
