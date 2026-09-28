@@ -1,4 +1,4 @@
-export type RealtimeAlertType = "new" | "update";
+export type RealtimeAlertType = "new" | "update" | "done";
 
 let audioContext: AudioContext | null = null;
 let listenersAttached = false;
@@ -65,6 +65,14 @@ export const playRealtimeAlert = (type: RealtimeAlertType = "new") => {
     if (type === "new") {
       playTone(880, now, 0.18, 0.18);
       playTone(1120, now + 0.2, 0.22, 0.2);
+      return;
+    }
+
+    if (type === "done") {
+      // Ascending 3-note chime: clearly different from "new" and "update"
+      playTone(660, now, 0.14, 0.2);
+      playTone(880, now + 0.15, 0.14, 0.2);
+      playTone(1320, now + 0.3, 0.35, 0.22);
       return;
     }
 

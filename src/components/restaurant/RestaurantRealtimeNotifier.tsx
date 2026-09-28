@@ -114,7 +114,7 @@ export default function RestaurantRealtimeNotifier() {
         title: `Bếp: ${statusLabel} - ${menuName}`,
         description,
       });
-      playRealtimeAlert("update");
+      playRealtimeAlert(nextStatus === "done" ? "done" : "update");
 
       // Only show toast on non-kitchen screens to avoid noise for chef
       if (!isKitchenScreen) {

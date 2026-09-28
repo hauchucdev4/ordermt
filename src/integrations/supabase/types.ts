@@ -60,6 +60,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           created_by_name: string | null
+          done_at: string | null
           id: string
           menu_item_id: string
           note: string | null
@@ -71,6 +72,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           created_by_name?: string | null
+          done_at?: string | null
           id?: string
           menu_item_id: string
           note?: string | null
@@ -82,6 +84,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           created_by_name?: string | null
+          done_at?: string | null
           id?: string
           menu_item_id?: string
           note?: string | null
