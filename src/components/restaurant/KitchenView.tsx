@@ -21,6 +21,7 @@ type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
 interface KitchenItem extends OrderItem {
   menu_item_name: string;
   table_name: string;
+  order_status: string;
 }
 
 interface KitchenViewProps {
@@ -49,6 +50,7 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
         ...item,
         menu_item_name: item.menu_items?.name || "",
         table_name: item.orders?.tables?.name || "",
+        order_status: item.orders?.status || "open",
       }));
       mapped.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
@@ -62,7 +64,9 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
         const onlyLocalUpdate = changedIds.length > 0 && changedIds.every(id => recentLocalUpdates.current.has(id));
 
         if (!onlyLocalUpdate) {
+          const becameDone = nextSnapshot.some(item => item.status === "done" && previousMap.get(item.id) && previousMap.get(item.id) !== "done");
           if (hasNewItem) playRealtimeAlert("new");
+          else if (becameDone) playRealtimeAlert("done");
           else if (changedIds.length > 0) playRealtimeAlert("update");
         }
       }
@@ -145,6 +149,7 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
               <span className="font-medium text-foreground/80">{item.table_name}</span>
               <span>•</span>
               <span>{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
+              {item.order_status === "paid" && (<><span>•</span><span className="font-semibold text-primary">Đã thanh toán</span></>)}
               {item.created_by_name && (
                 <>
                   <span>•</span>
@@ -162,7 +167,7 @@ export default function KitchenView({ restaurantId }: KitchenViewProps) {
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {(item.status === "preparing" || item.status === "done") && (
+        {(item.status === "preparing" || (item.status === "done" && item.order_status !== "paid")) && (
           <Button
             size="icon"
             variant="outline"
