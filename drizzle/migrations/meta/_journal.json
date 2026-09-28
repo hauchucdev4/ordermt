@@ -15,6 +15,13 @@
       "when": 1790617499001,
       "tag": "0001_admin_insert_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790619331126,
+      "tag": "0002_order_items_done_at",
+      "breakpoints": true
     }
   ]
 }
