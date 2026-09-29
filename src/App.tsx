@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
 import AccountSettings from "./pages/AccountSettings";
+import ItemHistoryPage from "./pages/ItemHistoryPage";
 import NotFound from "./pages/NotFound";
 import RestaurantRealtimeNotifier from "./components/restaurant/RestaurantRealtimeNotifier";
 import { NotificationProvider } from "./contexts/NotificationContext";
@@ -83,12 +84,14 @@ const App = () => (
               <Route path="tables" element={<ManagerTablesPage />} />
               <Route path="staff" element={<ManagerStaffPage />} />
               <Route path="reports" element={<ManagerReportsPage />} />
+              <Route path="history" element={<ItemHistoryPage />} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
 
             {/* Staff */}
             <Route path="/staff" element={<ProtectedRoute allowedRoles={["staff"]}><StaffLayout /></ProtectedRoute>}>
               <Route index element={<StaffOrderPage />} />
+              <Route path="history" element={<ItemHistoryPage />} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
 
@@ -96,6 +99,7 @@ const App = () => (
             <Route path="/chef" element={<ProtectedRoute allowedRoles={["chef"]}><ChefLayout /></ProtectedRoute>}>
               <Route index element={<ChefKitchenPage />} />
               <Route path="recipes" element={<ChefRecipesPage />} />
+              <Route path="history" element={<ItemHistoryPage />} />
               <Route path="settings" element={<AccountSettings />} />
             </Route>
 

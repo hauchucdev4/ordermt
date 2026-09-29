@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link, Outlet } from "react-router-dom";
-import { Settings, LogOut, UtensilsCrossed } from "lucide-react";
+import { Settings, LogOut, UtensilsCrossed, History } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -23,6 +23,10 @@ export default function StaffLayout() {
         </div>
 
         <div className="flex items-center gap-1">
+        <Button asChild variant="ghost" size="sm"><Link to="/staff">Order</Link></Button>
+        <Button asChild variant="ghost" size="sm" className="gap-2">
+          <Link to="/staff/history" title="Lịch sử món"><History className="h-4 w-4" /><span className="hidden sm:inline">Lịch sử món</span></Link>
+        </Button>
         <NotificationBell />
         <ThemeToggle />
         <DropdownMenu>
