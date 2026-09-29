@@ -13,6 +13,7 @@ import MenuManagement from "@/components/restaurant/MenuManagement";
 import TableManagement from "@/components/restaurant/TableManagement";
 import OrderStation from "@/components/restaurant/OrderStation";
 import KitchenView from "@/components/restaurant/KitchenView";
+import ItemHistory from "@/components/restaurant/ItemHistory";
 import BillPayment from "@/components/restaurant/BillPayment";
 import RevenueReport from "@/components/restaurant/RevenueReport";
 import ExcelImportDialog from "@/components/restaurant/ExcelImportDialog";
@@ -94,6 +95,7 @@ export default function RestaurantDetail() {
           <TabsTrigger value="tables">Bàn</TabsTrigger>
           <TabsTrigger value="staff">Nhân viên</TabsTrigger>
           <TabsTrigger value="reports">Doanh thu</TabsTrigger>
+          <TabsTrigger value="history">Lịch sử món</TabsTrigger>
         </TabsList>
 
         <TabsContent value="order" className="mt-4">
@@ -116,6 +118,9 @@ export default function RestaurantDetail() {
         </TabsContent>
         <TabsContent value="reports" className="mt-4">
           <RevenueReport restaurantId={restaurant.id} />
+        </TabsContent>
+        <TabsContent value="history" className="mt-4">
+          <ItemHistory restaurantId={restaurant.id} />
         </TabsContent>
       </Tabs>
     </div>
