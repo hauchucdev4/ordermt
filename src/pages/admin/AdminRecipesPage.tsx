@@ -49,8 +49,8 @@ export default function AdminRecipesPage() {
   const current = restaurants.find((r) => r.id === selected);
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
         <div>
           <h1 className="text-2xl font-bold">Công thức &amp; Định lượng</h1>
           <p className="text-sm text-muted-foreground">
@@ -58,7 +58,7 @@ export default function AdminRecipesPage() {
           </p>
         </div>
         <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger className="w-[240px]">
+          <SelectTrigger className="w-full sm:w-[240px]">
             <SelectValue placeholder="Chọn nhà hàng" />
           </SelectTrigger>
           <SelectContent>

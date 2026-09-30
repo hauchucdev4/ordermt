@@ -49,8 +49,8 @@ export default function ChefRecipesPage() {
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto max-w-6xl space-y-6 p-4">
+      <div className="flex items-center gap-3 border-b pb-4">
         <Button asChild variant="ghost" size="icon">
           <Link to="/chef">
             <ArrowLeft className="h-4 w-4" />

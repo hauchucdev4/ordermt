@@ -6,7 +6,7 @@ interface TableDetail {
   items: { name: string; quantity: number; price: number }[];
   total: number;
   orderId: string;
-  paidAt: string;
+  orderAt: string;
 }
 
 interface ExportParams {
@@ -141,7 +141,7 @@ export async function exportRevenueExcel(params: ExportParams) {
       stt: i + 1,
       id: td.orderId.slice(0, 8).toUpperCase(),
       table: td.tableName,
-      time: new Date(td.paidAt).toLocaleString("vi-VN"),
+      time: new Date(td.orderAt).toLocaleString("vi-VN"),
       total: td.total,
     });
 
@@ -251,7 +251,7 @@ export async function exportRevenueExcel(params: ExportParams) {
 
   const dailyMap: Record<string, { count: number; revenue: number }> = {};
   tableDetails.forEach((td) => {
-    const day = new Date(td.paidAt).toLocaleDateString("vi-VN");
+    const day = new Date(td.orderAt).toLocaleDateString("vi-VN");
     if (!dailyMap[day]) dailyMap[day] = { count: 0, revenue: 0 };
     dailyMap[day].count++;
     dailyMap[day].revenue += td.total;

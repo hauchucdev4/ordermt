@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,12 +23,14 @@ interface TableDetail {
   items: { name: string; quantity: number; price: number }[];
   total: number;
   orderId: string;
-  paidAt: string;
+  orderAt: string;
 }
 
 export default function RevenueReport({ restaurantId }: { restaurantId: string }) {
   const [filter, setFilter] = useState<TimeFilter>("today");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const hasLoadedRef = useRef(false);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalTables, setTotalTables] = useState(0);
@@ -53,8 +55,9 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     return { start: start.toISOString(), end: now.toISOString() };
   };
 
-  const fetchReport = async () => {
-    setLoading(true);
+  const fetchReport = useCallback(async () => {
+    if (hasLoadedRef.current) setRefreshing(true);
+    else setLoading(true);
     const { start, end } = getDateRange(filter);
 
     // Get restaurant name
@@ -66,8 +69,8 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
       .select("*")
       .eq("restaurant_id", restaurantId)
       .eq("status", "paid")
-      .gte("paid_at", start)
-      .lte("paid_at", end);
+      .gte("created_at", start)
+      .lte("created_at", end);
 
     const paidOrders = orders || [];
     setTotalRevenue(paidOrders.reduce((sum, o) => sum + Number(o.total), 0));
@@ -77,7 +80,7 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     // Chart data
     const grouped: Record<string, number> = {};
     paidOrders.forEach((o) => {
-      const d = new Date(o.paid_at!).toLocaleDateString("vi-VN");
+      const d = new Date(o.created_at).toLocaleDateString("vi-VN");
       grouped[d] = (grouped[d] || 0) + Number(o.total);
     });
     setChartData(Object.entries(grouped).map(([label, revenue]) => ({ label, revenue })));
@@ -114,7 +117,7 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
           items,
           total: Number(o.total),
           orderId: o.id,
-          paidAt: o.paid_at || o.created_at,
+          orderAt: o.created_at,
         };
       });
       setTableDetails(details);
@@ -122,10 +125,12 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
       setTableDetails([]);
     }
 
+    hasLoadedRef.current = true;
     setLoading(false);
-  };
+    setRefreshing(false);
+  }, [restaurantId, filter, customStart, customEnd]);
 
-  useEffect(() => { fetchReport(); }, [restaurantId, filter]);
+  useEffect(() => { fetchReport(); }, [fetchReport]);
 
   const exportExcel = async () => {
     const { exportRevenueExcel } = await import("@/lib/exportRevenueExcel");
@@ -201,6 +206,11 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
             </div>
             <Button size="sm" onClick={fetchReport}>Lọc</Button>
           </div>
+        )}
+        {refreshing && (
+          <span className="flex items-center gap-1.5 pb-1 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang cập nhật
+          </span>
         )}
       </div>
 
@@ -290,7 +300,7 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-semibold">{td.total.toLocaleString("vi-VN")}₫</TableCell>
-                      <TableCell className="text-sm">{new Date(td.paidAt).toLocaleString("vi-VN")}</TableCell>
+                      <TableCell className="text-sm">{new Date(td.orderAt).toLocaleString("vi-VN")}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); viewTableBill(td); }}>
                           <Eye className="h-4 w-4" />
