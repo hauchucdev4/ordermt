@@ -16,7 +16,7 @@ interface BillDetail {
   items: BillItem[];
   total: number;
   orderId: string;
-  paidAt: string;
+  orderAt: string;
 }
 
 interface RevenueReportData {
@@ -60,7 +60,7 @@ function buildHTML(data: RevenueReportData): string {
       <div style="margin-bottom:16px;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;page-break-inside:avoid;">
         <div style="background:#f1f5f9;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #d1d5db;">
           <span style="font-weight:700;font-size:13px;color:#1e293b;">Hóa đơn #${idx + 1} — ${bill.tableName}</span>
-          <span style="font-size:11px;color:#64748b;">${fmtDate(bill.paidAt)}</span>
+          <span style="font-size:11px;color:#64748b;">Ngày order: ${fmtDate(bill.orderAt)}</span>
         </div>
         <table style="width:100%;border-collapse:collapse;">
           <thead>

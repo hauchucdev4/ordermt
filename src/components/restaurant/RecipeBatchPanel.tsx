@@ -202,14 +202,14 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <section className="space-y-4 border-t pt-6" aria-labelledby="recipe-history-title">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Lịch sử định lượng</h2>
+          <h2 id="recipe-history-title" className="text-lg font-semibold">Lịch sử định lượng</h2>
           <Badge variant="secondary">{batches.length}</Badge>
         </div>
-        <div className="flex gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Button variant="outline" onClick={printSelected} disabled={selected.size === 0}>
             <Printer className="mr-2 h-4 w-4" /> In đã chọn ({selected.size})
           </Button>
@@ -231,10 +231,14 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
         <div className="space-y-4">
           {grouped.map(([day, items]) => (
             <div key={day} className="space-y-2">
-              <p className="text-sm font-semibold text-muted-foreground">Ngày {day}</p>
+              <div className="flex items-center gap-3">
+                <p className="shrink-0 text-sm font-semibold">Ngày {day}</p>
+                <div className="h-px flex-1 bg-border" />
+                <Badge variant="outline">{items.length} bản</Badge>
+              </div>
               <div className="flex flex-col gap-2">
                 {items.map((b) => (
-                  <Card key={b.id} className="flex items-start gap-3 p-3">
+                  <Card key={b.id} className="flex items-start gap-3 p-3 sm:p-4">
                     <Checkbox
                       className="mt-1"
                       checked={selected.has(b.id)}
@@ -248,7 +252,7 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
                       }
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                       <div className="flex flex-wrap items-center gap-2">
                         <p className="truncate font-medium">{b.recipe_name}</p>
                         <Badge variant="outline">× {b.quantity}</Badge>
                       </div>
@@ -259,7 +263,7 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
                           minute: "2-digit",
                         })}
                       </p>
-                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                       <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
                         {b.ingredients.map((i) => `${i.name} ${i.total}${i.unit}`).join(" • ") ||
                           "Không có nguyên liệu"}
                       </p>
@@ -480,6 +484,6 @@ export default function RecipeBatchPanel({ restaurantId, restaurantName }: Props
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </section>
   );
 }

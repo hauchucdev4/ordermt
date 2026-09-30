@@ -270,9 +270,15 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[200px]">
+    <section className="space-y-4 animate-fade-in" aria-labelledby="recipe-list-title">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h2 id="recipe-list-title" className="text-lg font-semibold">Danh sách công thức</h2>
+          <p className="text-sm text-muted-foreground">{filtered.length} món · Chọn một món để tính định lượng</p>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Tìm món hoặc nguyên liệu..."
@@ -281,11 +287,10 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
             className="pl-9"
           />
         </div>
-        {canEdit && (
+        {canEdit && <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <Button variant="outline" onClick={handleExport}>
             <FileSpreadsheet className="mr-2 h-4 w-4" /> Xuất Excel
           </Button>
-        )}
         {canEdit && (
 
           <>
@@ -303,11 +308,11 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
             <Button variant="outline" onClick={() => fileRef.current?.click()}>
               <Upload className="mr-2 h-4 w-4" /> Import Excel
             </Button>
-            <Button onClick={openCreate}>
+            <Button onClick={openCreate} className="col-span-2 sm:col-span-1">
               <Plus className="mr-2 h-4 w-4" /> Thêm định lượng món
             </Button>
           </>
-        )}
+        </div>}
       </div>
 
       {filtered.length === 0 ? (
@@ -321,7 +326,7 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
           )}
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map((r) => (
             <Card
               key={r.id}
@@ -365,7 +370,7 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
                   </div>
                 )}
               </div>
-              <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+              <ul className="mt-3 grid gap-x-5 gap-y-1 text-sm text-muted-foreground sm:grid-cols-2">
                 {r.recipe_ingredients.slice(0, 4).map((i) => (
                   <li key={i.id} className="flex justify-between gap-2">
                     <span className="truncate">{i.name}</span>
@@ -600,6 +605,6 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </section>
   );
 }
