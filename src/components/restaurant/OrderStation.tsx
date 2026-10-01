@@ -17,6 +17,7 @@ import { Loader2, Plus, Minus, Trash2, Send, CreditCard, Eye, Search, UtensilsCr
 import type { Database } from "@/integrations/supabase/types";
 import ReceiptPreview, { type ReceiptData } from "@/components/restaurant/ReceiptPreview";
 import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
+import { formatOrderDate, isOrderOverdue } from "@/lib/orderDay";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
@@ -35,6 +36,7 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
   const { profile } = useAuth();
   const { toast } = useToast();
   const [tables, setTables] = useState<TableRow[]>([]);
+  const [openOrderDates, setOpenOrderDates] = useState<Record<string, string>>({});
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTable, setSelectedTable] = useState<TableRow | null>(null);
@@ -53,10 +55,13 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
   const previousTableSignatureRef = useRef<string | null>(null);
   const previousOrderItemsRef = useRef<Array<{ id: string; status: string }>>([]);
 
-  const canDeleteAll = profile?.role === "manager" || profile?.role === "admin";
+  const canDeleteAll = profile?.role === "manager" || profile?.role === "admin" || profile?.role === "superadmin";
 
   const fetchTables = useCallback(async () => {
-    const { data } = await supabase.from("tables").select("*").eq("restaurant_id", restaurantId).order("name");
+    const [{ data }, { data: openOrders }] = await Promise.all([
+      supabase.from("tables").select("*").eq("restaurant_id", restaurantId).order("name"),
+      supabase.from("orders").select("table_id, created_at").eq("restaurant_id", restaurantId).eq("status", "open"),
+    ]);
     const nextTables = data || [];
     const nextSignature = nextTables.map(table => `${table.id}:${table.status}`).join("|");
 
@@ -66,6 +71,7 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
 
     previousTableSignatureRef.current = nextSignature;
     setTables(nextTables);
+    setOpenOrderDates(Object.fromEntries((openOrders || []).map((order) => [order.table_id, order.created_at])));
   }, [restaurantId]);
 
   const fetchMenu = useCallback(async () => {
@@ -221,11 +227,19 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
     }
     if (item.status !== "new" && !confirm(`Xóa món "${item.menu_items?.name}" (${item.status === "preparing" ? "đang làm" : "đã xong"})?`)) return;
 
-    const { error } = await supabase.from("order_items").delete().eq("id", item.id);
+    const { data: tableReset, error } = await supabase.rpc("delete_order_item_and_reset", { _item_id: item.id });
     if (error) {
       toast({ title: "Lỗi xóa", description: error.message, variant: "destructive" });
     } else {
-      if (selectedTable) loadTableOrder(selectedTable);
+      if (tableReset) {
+        toast({ title: "Bàn đã trở về trạng thái Trống", description: "Món cuối cùng đã được xóa khỏi order." });
+        setSelectedTable(null);
+        setOrderId(null);
+        setOrderItems([]);
+        await fetchTables();
+      } else if (selectedTable) {
+        loadTableOrder(selectedTable);
+      }
     }
   };
 
@@ -302,16 +316,20 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
   return (
     <>
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-        {tables.map(table => (
-          <Card key={table.id} className="cursor-pointer hover:shadow-md transition-all aspect-square" onClick={() => openTable(table)}>
+        {tables.map(table => {
+          const overdueDate = openOrderDates[table.id];
+          const overdue = overdueDate ? isOrderOverdue(overdueDate) : false;
+          return (
+          <Card key={table.id} className={`cursor-pointer transition-all hover:shadow-md ${overdue ? "border-warning" : ""}`} onClick={() => openTable(table)}>
             <CardContent className="p-2 h-full flex flex-col items-center justify-center gap-1">
               <p className="font-bold text-lg leading-none">{table.name}</p>
               <Badge className={`text-[10px] px-1.5 py-0 ${table.status === "empty" ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-orange-500/20 text-orange-700 dark:text-orange-300"}`}>
                 {table.status === "empty" ? "Trống" : "Có khách"}
               </Badge>
+              {overdue && <span className="text-center text-[10px] font-semibold leading-tight text-warning-foreground">Bill {formatOrderDate(overdueDate)} chưa thanh toán</span>}
             </CardContent>
           </Card>
-        ))}
+        )})}
         {tables.length === 0 && (
           <p className="col-span-full text-center text-muted-foreground py-8">Chưa có bàn nào</p>
         )}
@@ -322,6 +340,12 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
           <DialogHeader className="px-4 pt-4 pb-0 md:px-6 md:pt-6 md:pb-2">
             <DialogTitle className="text-base md:text-lg">{selectedTable?.name} - Đặt món</DialogTitle>
           </DialogHeader>
+          {selectedTable && openOrderDates[selectedTable.id] && isOrderOverdue(openOrderDates[selectedTable.id]) && (
+            <div className="mx-4 flex items-start gap-2 rounded-lg border border-warning bg-warning/10 px-3 py-2 text-sm md:mx-6">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning-foreground" />
+              <p><strong>Bill ngày {formatOrderDate(openOrderDates[selectedTable.id])} chưa thanh toán.</strong> Hóa đơn vẫn chờ thao tác và doanh thu được tính về ngày order này.</p>
+            </div>
+          )}
 
           {/* Mobile tabs */}
           <div className="flex md:hidden border-b">
