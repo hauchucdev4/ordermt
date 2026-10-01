@@ -7,22 +7,22 @@
 @layer base {
   :root {
     /* Pix Green — HyperOS light */
-    --background: 140 30% 96%;
+    --background: 140 28% 97%;
     --foreground: 155 30% 12%;
 
-    --card: 0 0% 100%;
+    --card: 145 34% 92%;
     --card-foreground: 155 30% 12%;
 
-    --popover: 140 25% 99%;
+    --popover: 145 32% 96%;
     --popover-foreground: 155 30% 12%;
 
     --primary: 152 48% 38%;
     --primary-foreground: 140 60% 97%;
 
-    --secondary: 145 40% 90%;
+    --secondary: 145 42% 86%;
     --secondary-foreground: 155 35% 18%;
 
-    --muted: 145 25% 93%;
+    --muted: 145 30% 89%;
     --muted-foreground: 155 12% 42%;
 
     /* Pix Purple accent */
@@ -38,8 +38,8 @@
     --destructive: 355 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 22% 87%;
-    --input: 145 22% 87%;
+    --border: 150 26% 73%;
+    --input: 150 26% 78%;
     --ring: 152 48% 45%;
 
     --radius: 1.5rem;
@@ -148,6 +148,36 @@
 
 /* HyperOS / Pix pill-shaped system styling */
 @layer components {
+  /* Light theme: colored operating surfaces stay distinct from the page canvas. */
+  :root:not(.dark) .bg-card {
+    border-color: hsl(var(--border));
+    box-shadow: 0 2px 8px hsl(var(--foreground) / 0.07);
+  }
+
+  :root:not(.dark) .grid > .bg-card:nth-child(3n + 2),
+  :root:not(.dark) .space-y-2 > .bg-card:nth-child(3n + 2),
+  :root:not(.dark) .space-y-3 > .bg-card:nth-child(3n + 2),
+  :root:not(.dark) .space-y-4 > .bg-card:nth-child(3n + 2) {
+    background: hsl(var(--accent) / 0.1);
+    border-color: hsl(var(--accent) / 0.32);
+  }
+
+  :root:not(.dark) .grid > .bg-card:nth-child(3n),
+  :root:not(.dark) .space-y-2 > .bg-card:nth-child(3n),
+  :root:not(.dark) .space-y-3 > .bg-card:nth-child(3n),
+  :root:not(.dark) .space-y-4 > .bg-card:nth-child(3n) {
+    background: hsl(var(--warning) / 0.13);
+    border-color: hsl(var(--warning) / 0.38);
+  }
+
+  :root:not(.dark) input:not([type="checkbox"]):not([type="radio"]),
+  :root:not(.dark) textarea,
+  :root:not(.dark) select,
+  :root:not(.dark) [role="combobox"] {
+    background: hsl(var(--popover));
+    border-color: hsl(var(--input));
+  }
+
   button,
   [role="tab"],
   .btn-pill {
@@ -176,9 +206,26 @@
     font-size: 0.7rem;
   }
 
+  :root:not(.dark) table thead tr {
+    background: hsl(var(--primary) / 0.16);
+  }
+
+  :root:not(.dark) table thead th {
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+  }
+
   table tbody tr {
     background: hsl(var(--secondary) / 0.5);
     border-bottom: 0 !important;
+  }
+
+  :root:not(.dark) table tbody tr:nth-child(odd) {
+    background: hsl(var(--primary) / 0.12);
+  }
+
+  :root:not(.dark) table tbody tr:nth-child(even) {
+    background: hsl(var(--accent) / 0.1);
   }
 
   table tbody tr > td:first-child {
