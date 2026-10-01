@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, Receipt, CreditCard, Eye, AlertTriangle } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ReceiptPreview, { type ReceiptData } from "./ReceiptPreview";
+import { formatOrderDate, isOrderOverdue } from "@/lib/orderDay";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 
@@ -24,6 +25,7 @@ interface TableBill { table: TableRow; orderId: string; items: BillItem[]; total
 export default function BillPayment({ restaurantId, restaurantName }: { restaurantId: string; restaurantName?: string }) {
   const { toast } = useToast();
   const [tables, setTables] = useState<TableRow[]>([]);
+  const [openOrderDates, setOpenOrderDates] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [selectedBill, setSelectedBill] = useState<TableBill | null>(null);
   const [paying, setPaying] = useState(false);
@@ -34,9 +36,12 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
 
   const fetchOccupiedTables = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("tables").select("*").eq("restaurant_id", restaurantId).eq("status", "occupied").order("name");
+    const [{ data }, { data: openOrders }] = await Promise.all([
+      supabase.from("tables").select("*").eq("restaurant_id", restaurantId).eq("status", "occupied").order("name"),
+      supabase.from("orders").select("table_id, created_at").eq("restaurant_id", restaurantId).eq("status", "open"),
+    ]);
     setTables(data || []);
+    setOpenOrderDates(Object.fromEntries((openOrders || []).map((order) => [order.table_id, order.created_at])));
     setLoading(false);
   }, [restaurantId]);
 
@@ -150,15 +155,19 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
         </Card>
       ) : (
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {tables.map(t => (
-            <Card key={t.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => viewBill(t)}>
+          {tables.map(t => {
+            const overdueDate = openOrderDates[t.id];
+            const overdue = overdueDate ? isOrderOverdue(overdueDate) : false;
+            return (
+            <Card key={t.id} className={`cursor-pointer transition-all hover:shadow-md ${overdue ? "border-warning" : ""}`} onClick={() => viewBill(t)}>
               <CardContent className="p-4 text-center">
                 <p className="font-bold text-lg">{t.name}</p>
                 <Badge className="bg-orange-500/20 text-orange-700 dark:text-orange-300 mt-1">Có khách</Badge>
                 <p className="text-xs text-muted-foreground mt-2">Nhấn để thanh toán</p>
+                {overdue && <p className="mt-2 text-xs font-semibold text-warning-foreground">Bill ngày {formatOrderDate(overdueDate)} chưa thanh toán</p>}
               </CardContent>
             </Card>
-          ))}
+          )})}
         </div>
       )}
 
@@ -179,6 +188,12 @@ export default function BillPayment({ restaurantId, restaurantName }: { restaura
 
           {selectedBill && (
             <div className="px-6 py-4 space-y-4">
+              {isOrderOverdue(selectedBill.createdAt) && (
+                <div className="flex items-start gap-2 rounded-lg border border-warning bg-warning/10 px-3 py-2 text-sm">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning-foreground" />
+                  <p><strong>Bill ngày {formatOrderDate(selectedBill.createdAt)} chưa thanh toán.</strong> Kết quả doanh thu sẽ được tính về ngày order ban đầu.</p>
+                </div>
+              )}
               {/* Items table */}
               {selectedBill.items.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Chưa có món nào</p>

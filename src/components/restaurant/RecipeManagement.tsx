@@ -287,13 +287,11 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
             className="pl-9"
           />
         </div>
-        {canEdit && <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-          <Button variant="outline" onClick={handleExport}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" /> Xuất Excel
-          </Button>
         {canEdit && (
-
-          <>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <Button variant="outline" onClick={handleExport}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Xuất Excel
+            </Button>
             <input
               ref={fileRef}
               type="file"
@@ -311,8 +309,8 @@ export default function RecipeManagement({ restaurantId, restaurantName, canEdit
             <Button onClick={openCreate} className="col-span-2 sm:col-span-1">
               <Plus className="mr-2 h-4 w-4" /> Thêm định lượng món
             </Button>
-          </>
-        </div>}
+          </div>
+        )}
       </div>
 
       {filtered.length === 0 ? (

@@ -22,6 +22,13 @@
       "when": 1790619331126,
       "tag": "0002_order_items_done_at",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790857908056,
+      "tag": "0003_delete_order_item_and_reset_table",
+      "breakpoints": true
     }
   ]
 }

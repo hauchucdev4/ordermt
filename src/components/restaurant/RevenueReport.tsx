@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,7 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     return { start: start.toISOString(), end: now.toISOString() };
   };
 
-  const fetchReport = useCallback(async () => {
+  const fetchReport = async () => {
     if (hasLoadedRef.current) setRefreshing(true);
     else setLoading(true);
     const { start, end } = getDateRange(filter);
@@ -128,9 +128,13 @@ export default function RevenueReport({ restaurantId }: { restaurantId: string }
     hasLoadedRef.current = true;
     setLoading(false);
     setRefreshing(false);
-  }, [restaurantId, filter, customStart, customEnd]);
+  };
 
-  useEffect(() => { fetchReport(); }, [fetchReport]);
+  useEffect(() => {
+    fetchReport();
+    // Custom dates are applied only after the user presses Lọc.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId, filter]);
 
   const exportExcel = async () => {
     const { exportRevenueExcel } = await import("@/lib/exportRevenueExcel");
