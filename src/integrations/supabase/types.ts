@@ -401,6 +401,10 @@ export type Database = {
     }
     Functions: {
       can_access_recipes: { Args: { _restaurant_id: string }; Returns: boolean }
+      delete_order_item_and_reset: {
+        Args: { _item_id: string }
+        Returns: boolean
+      }
       get_user_restaurant: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
