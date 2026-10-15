@@ -7,4 +7,5 @@
 - [x] Xóa món cuối cùng sẽ xóa order rỗng và trả bàn về Trống.
 - [x] Kiểm tra bản xem trước và lỗi biên dịch.
 
-- [ ] Light theme: mỗi ô/table/card có nền xanh, tím hoặc trạng thái riêng, không dùng trắng trùng nền
+- [x] Light theme: mỗi ô/table/card có nền xanh, tím hoặc trạng thái riêng, không dùng trắng trùng nền.
+- [ ] Kiểm tra trực quan tám mục sau khi đăng nhập: cần người dùng đăng nhập lại bản xem trước.
