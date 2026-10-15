@@ -137,6 +137,10 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
             <Label>Tên bàn</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Bàn 1" />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="table-seats">Số ghế</Label>
+            <Input id="table-seats" type="number" min={1} max={999} step={1} value={seats} onChange={(e) => setSeats(e.target.value)} placeholder="4" />
+          </div>
           <DialogFooter>
             <Button onClick={handleAdd} disabled={submitting || !name.trim() || !validSeats(seats)}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Thêm
@@ -152,6 +156,10 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
           <div className="space-y-2">
             <Label>Tên bàn mới</Label>
             <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-table-seats">Số ghế</Label>
+            <Input id="edit-table-seats" type="number" min={1} max={999} step={1} value={editSeats} onChange={(e) => setEditSeats(e.target.value)} placeholder="4" />
           </div>
           <DialogFooter>
             <Button onClick={handleRename} disabled={submitting || !editName.trim() || !validSeats(editSeats)}>

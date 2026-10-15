@@ -54,6 +54,7 @@ CREATE TABLE public.tables (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id uuid NOT NULL REFERENCES public.restaurants(id),
   name          text NOT NULL,
+  seats         integer CHECK (seats IS NULL OR (seats >= 1 AND seats <= 999)),
   status        public.table_status NOT NULL DEFAULT 'empty',
   created_at    timestamptz NOT NULL DEFAULT now()
 );
