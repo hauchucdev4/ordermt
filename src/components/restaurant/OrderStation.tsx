@@ -18,6 +18,8 @@ import type { Database } from "@/integrations/supabase/types";
 import ReceiptPreview, { type ReceiptData } from "@/components/restaurant/ReceiptPreview";
 import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
 import { formatOrderDate, isOrderOverdue } from "@/lib/orderDay";
+import { sortTablesBySeats } from "@/lib/tableSeats";
+import TableSeatBadge from "./TableSeatBadge";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
@@ -62,7 +64,7 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
       supabase.from("tables").select("*").eq("restaurant_id", restaurantId).order("name"),
       supabase.from("orders").select("table_id, created_at").eq("restaurant_id", restaurantId).eq("status", "open"),
     ]);
-    const nextTables = data || [];
+    const nextTables = sortTablesBySeats(data || []);
     const nextSignature = nextTables.map(table => `${table.id}:${table.status}`).join("|");
 
     if (previousTableSignatureRef.current !== null && previousTableSignatureRef.current !== nextSignature) {
@@ -320,8 +322,9 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
           const overdueDate = openOrderDates[table.id];
           const overdue = overdueDate ? isOrderOverdue(overdueDate) : false;
           return (
-          <Card key={table.id} className={`cursor-pointer transition-all hover:shadow-md ${overdue ? "border-warning" : ""}`} onClick={() => openTable(table)}>
-            <CardContent className="p-2 h-full flex flex-col items-center justify-center gap-1">
+          <Card key={table.id} className={`relative cursor-pointer transition-all hover:shadow-md ${overdue ? "border-warning" : ""}`} onClick={() => openTable(table)}>
+            <TableSeatBadge seats={table.seats} />
+            <CardContent className="p-2 pt-10 min-h-24 h-full flex flex-col items-center justify-center gap-1">
               <p className="font-bold text-lg leading-none">{table.name}</p>
               <Badge className={`text-[10px] px-1.5 py-0 ${table.status === "empty" ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-orange-500/20 text-orange-700 dark:text-orange-300"}`}>
                 {table.status === "empty" ? "Trống" : "Có khách"}
