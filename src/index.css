@@ -12,6 +12,9 @@
 
     --card: 145 34% 92%;
     --card-foreground: 155 30% 12%;
+    --surface-mint: 145 40% 87%;
+    --surface-purple: 265 46% 90%;
+    --surface-yellow: 45 70% 88%;
 
     --popover: 145 32% 96%;
     --popover-foreground: 155 30% 12%;
@@ -60,12 +63,12 @@
     --chart-5: 175 45% 45%;
 
     --kitchen-new: 265 60% 58%;
-    --kitchen-new-soft: 265 70% 96%;
+    --kitchen-new-soft: 265 55% 90%;
     --kitchen-preparing: 42 92% 52%;
-    --kitchen-preparing-soft: 45 95% 95%;
+    --kitchen-preparing-soft: 45 80% 88%;
     --kitchen-done: 152 52% 40%;
-    --kitchen-done-soft: 148 55% 94%;
-    --kitchen-note-bg: 265 70% 96%;
+    --kitchen-done-soft: 148 45% 87%;
+    --kitchen-note-bg: 265 55% 90%;
     --kitchen-note-border: 265 60% 62%;
     --kitchen-note-foreground: 268 55% 32%;
   }
@@ -154,11 +157,18 @@
     box-shadow: 0 2px 8px hsl(var(--foreground) / 0.07);
   }
 
+  :root:not(.dark) .grid > .bg-card:nth-child(3n + 1),
+  :root:not(.dark) .space-y-2 > .bg-card:nth-child(3n + 1),
+  :root:not(.dark) .space-y-3 > .bg-card:nth-child(3n + 1),
+  :root:not(.dark) .space-y-4 > .bg-card:nth-child(3n + 1) {
+    background: hsl(var(--surface-mint));
+  }
+
   :root:not(.dark) .grid > .bg-card:nth-child(3n + 2),
   :root:not(.dark) .space-y-2 > .bg-card:nth-child(3n + 2),
   :root:not(.dark) .space-y-3 > .bg-card:nth-child(3n + 2),
   :root:not(.dark) .space-y-4 > .bg-card:nth-child(3n + 2) {
-    background: hsl(var(--accent) / 0.1);
+    background: hsl(var(--surface-purple));
     border-color: hsl(var(--accent) / 0.32);
   }
 
@@ -166,7 +176,7 @@
   :root:not(.dark) .space-y-2 > .bg-card:nth-child(3n),
   :root:not(.dark) .space-y-3 > .bg-card:nth-child(3n),
   :root:not(.dark) .space-y-4 > .bg-card:nth-child(3n) {
-    background: hsl(var(--warning) / 0.13);
+    background: hsl(var(--surface-yellow));
     border-color: hsl(var(--warning) / 0.38);
   }
 
@@ -221,11 +231,11 @@
   }
 
   :root:not(.dark) table tbody tr:nth-child(odd) {
-    background: hsl(var(--primary) / 0.12);
+    background: hsl(var(--surface-mint));
   }
 
   :root:not(.dark) table tbody tr:nth-child(even) {
-    background: hsl(var(--accent) / 0.1);
+    background: hsl(var(--surface-purple));
   }
 
   table tbody tr > td:first-child {
