@@ -1,8 +1,8 @@
-export default function TableSeatBadge({ seats }: { seats: number | null }) {
+export default function TableSeatBadge({ seats, occupied = false }: { seats: number | null; occupied?: boolean }) {
   if (seats === null) return null;
-  const color = seats <= 4 ? "bg-primary text-primary-foreground" : seats <= 8 ? "bg-accent text-accent-foreground" : "bg-warning text-warning-foreground";
+  const color = occupied ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground";
   return (
-    <span title={`${seats} ghế`} aria-label={`${seats} ghế`} className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${color}`}>
+    <span title={`${seats} ghế · ${occupied ? "Có khách" : "Trống"}`} aria-label={`${seats} ghế · ${occupied ? "Có khách" : "Trống"}`} className={`absolute right-2 top-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${color}`}>
       {seats}
     </span>
   );

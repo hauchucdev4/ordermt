@@ -14,6 +14,7 @@ import { matchSearch } from "@/lib/searchUtils";
 import type { Database } from "@/integrations/supabase/types";
 import { sortTablesBySeats, validSeats } from "@/lib/tableSeats";
 import TableSeatBadge from "./TableSeatBadge";
+import TableSeatGroups from "./TableSeatGroups";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 
@@ -106,13 +107,13 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {tables.filter(t => matchSearch(t.name, searchQuery)).map((t) => (
-            <Card key={t.id} className="relative text-center">
-              <TableSeatBadge seats={t.seats} />
+        <TableSeatGroups tables={tables.filter(t => matchSearch(t.name, searchQuery))} gridClassName="gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {t => (
+            <Card key={t.id} className="table-tile relative text-center">
+              <TableSeatBadge seats={t.seats} occupied={t.status !== "empty"} />
               <CardContent className="p-4 pt-10 space-y-2">
                 <p className="font-semibold">{t.name}</p>
-                <Badge variant={t.status === "empty" ? "outline" : "default"}>
+                <Badge className={t.status === "empty" ? "bg-primary/15 text-primary" : "bg-accent/15 text-accent"}>
                   {t.status === "empty" ? "Trống" : "Có khách"}
                 </Badge>
                 <div className="flex justify-center gap-1 pt-1">
@@ -125,8 +126,8 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          )}
+        </TableSeatGroups>
       )}
 
       {/* Add Dialog */}

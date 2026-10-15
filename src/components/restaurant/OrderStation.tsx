@@ -20,6 +20,7 @@ import { playRealtimeAlert, primeRealtimeAudio } from "@/lib/realtimeAlerts";
 import { formatOrderDate, isOrderOverdue } from "@/lib/orderDay";
 import { sortTablesBySeats } from "@/lib/tableSeats";
 import TableSeatBadge from "./TableSeatBadge";
+import TableSeatGroups from "./TableSeatGroups";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
@@ -317,26 +318,26 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
 
   return (
     <>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-        {tables.map(table => {
+      <TableSeatGroups tables={tables} gridClassName="grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+        {table => {
           const overdueDate = openOrderDates[table.id];
           const overdue = overdueDate ? isOrderOverdue(overdueDate) : false;
           return (
-          <Card key={table.id} className={`relative cursor-pointer transition-all hover:shadow-md ${overdue ? "border-warning" : ""}`} onClick={() => openTable(table)}>
-            <TableSeatBadge seats={table.seats} />
+          <Card key={table.id} className={`table-tile relative cursor-pointer transition-all hover:shadow-md ${overdue ? "border-warning" : ""}`} onClick={() => openTable(table)}>
+            <TableSeatBadge seats={table.seats} occupied={table.status !== "empty"} />
             <CardContent className="p-2 pt-10 min-h-24 h-full flex flex-col items-center justify-center gap-1">
               <p className="w-full break-words text-center font-bold text-base leading-tight">{table.name}</p>
-              <Badge className={`text-[10px] px-1.5 py-0 ${table.status === "empty" ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-orange-500/20 text-orange-700 dark:text-orange-300"}`}>
+              <Badge className={`text-[10px] px-1.5 py-0 ${table.status === "empty" ? "bg-primary/15 text-primary" : "bg-accent/15 text-accent"}`}>
                 {table.status === "empty" ? "Trống" : "Có khách"}
               </Badge>
               {overdue && <span className="text-center text-[10px] font-semibold leading-tight text-warning-foreground">Bill {formatOrderDate(overdueDate)} chưa thanh toán</span>}
             </CardContent>
           </Card>
-        )})}
-        {tables.length === 0 && (
-          <p className="col-span-full text-center text-muted-foreground py-8">Chưa có bàn nào</p>
-        )}
-      </div>
+        )}}
+      </TableSeatGroups>
+      {tables.length === 0 && (
+        <p className="text-center text-muted-foreground py-8">Chưa có bàn nào</p>
+      )}
 
       <Dialog open={!!selectedTable} onOpenChange={(open) => !open && (setSelectedTable(null), setPendingAction(null))}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">

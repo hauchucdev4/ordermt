@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Gom bàn cùng số ghế thành các cụm dọc tăng dần; đổi màu huy hiệu khi có khách; đồng nhất nền bàn trong theme light và kiểm thử.
+
 - [x] Thêm số ghế khi tạo/sửa bàn, huy hiệu tròn góc phải trong Order và xếp theo số ghế tăng dần; đã thử tạo, đọc lại sau tải trang và xóa bàn thử.
 
 - [x] Làm gọn bố cục Công thức & Định lượng.
