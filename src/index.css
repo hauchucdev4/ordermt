@@ -188,6 +188,11 @@
     border-color: hsl(var(--input));
   }
 
+  :root:not(.dark) .grid.table-seat-grid > .bg-card.table-tile {
+    background: hsl(var(--surface-mint));
+    border-color: hsl(var(--border));
+  }
+
   button,
   [role="tab"],
   .btn-pill {
