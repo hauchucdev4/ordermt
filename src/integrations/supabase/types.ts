@@ -369,6 +369,7 @@ export type Database = {
           id: string
           name: string
           restaurant_id: string
+          seats: number | null
           status: Database["public"]["Enums"]["table_status"]
         }
         Insert: {
@@ -376,6 +377,7 @@ export type Database = {
           id?: string
           name: string
           restaurant_id: string
+          seats?: number | null
           status?: Database["public"]["Enums"]["table_status"]
         }
         Update: {
@@ -383,6 +385,7 @@ export type Database = {
           id?: string
           name?: string
           restaurant_id?: string
+          seats?: number | null
           status?: Database["public"]["Enums"]["table_status"]
         }
         Relationships: [

@@ -29,6 +29,13 @@
       "when": 1790857908056,
       "tag": "0003_delete_order_item_and_reset_table",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792087951964,
+      "tag": "0004_add_table_seats",
+      "breakpoints": true
     }
   ]
 }

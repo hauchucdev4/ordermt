@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Thêm số ghế khi tạo/sửa bàn, huy hiệu tròn góc phải trong Order và xếp theo số ghế tăng dần.
+
 - [x] Làm gọn bố cục Công thức & Định lượng.
 - [x] Đổi bộ lọc Báo cáo Doanh thu sang trạng thái cập nhật nhẹ.
 - [x] Ghi nhận doanh thu theo ngày order gốc.
