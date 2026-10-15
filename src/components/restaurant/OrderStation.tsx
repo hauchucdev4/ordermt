@@ -325,7 +325,7 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
           <Card key={table.id} className={`relative cursor-pointer transition-all hover:shadow-md ${overdue ? "border-warning" : ""}`} onClick={() => openTable(table)}>
             <TableSeatBadge seats={table.seats} />
             <CardContent className="p-2 pt-10 min-h-24 h-full flex flex-col items-center justify-center gap-1">
-              <p className="font-bold text-lg leading-none">{table.name}</p>
+              <p className="w-full break-words text-center font-bold text-base leading-tight">{table.name}</p>
               <Badge className={`text-[10px] px-1.5 py-0 ${table.status === "empty" ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-orange-500/20 text-orange-700 dark:text-orange-300"}`}>
                 {table.status === "empty" ? "Trống" : "Có khách"}
               </Badge>

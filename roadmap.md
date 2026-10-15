@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Thêm số ghế khi tạo/sửa bàn, huy hiệu tròn góc phải trong Order và xếp theo số ghế tăng dần.
+- [x] Thêm số ghế khi tạo/sửa bàn, huy hiệu tròn góc phải trong Order và xếp theo số ghế tăng dần; đã thử tạo, đọc lại sau tải trang và xóa bàn thử.
 
 - [x] Làm gọn bố cục Công thức & Định lượng.
 - [x] Đổi bộ lọc Báo cáo Doanh thu sang trạng thái cập nhật nhẹ.
