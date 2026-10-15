@@ -12,6 +12,8 @@ import {
 import { Plus, Loader2, Trash2, Edit, LayoutGrid, Search } from "lucide-react";
 import { matchSearch } from "@/lib/searchUtils";
 import type { Database } from "@/integrations/supabase/types";
+import { sortTablesBySeats, validSeats } from "@/lib/tableSeats";
+import TableSeatBadge from "./TableSeatBadge";
 
 type TableRow = Database["public"]["Tables"]["tables"]["Row"];
 
@@ -21,12 +23,14 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
+  const [seats, setSeats] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TableRow | null>(null);
   const [editName, setEditName] = useState("");
+  const [editSeats, setEditSeats] = useState("");
 
   const fetchTables = async (showLoader = false) => {
     if (showLoader) setLoading(true);
@@ -35,7 +39,7 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
       .select("*")
       .eq("restaurant_id", restaurantId)
       .order("name");
-    setTables(data || []);
+    setTables(sortTablesBySeats(data || []));
     setLoading(false);
   };
 
@@ -49,21 +53,21 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
   }, [restaurantId]);
 
   const handleAdd = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !validSeats(seats)) return;
     setSubmitting(true);
-    const { error } = await supabase.from("tables").insert({ name: name.trim(), restaurant_id: restaurantId });
+    const { error } = await supabase.from("tables").insert({ name: name.trim(), seats: Number(seats), restaurant_id: restaurantId });
     setSubmitting(false);
     if (error) toast({ title: "Lỗi", description: error.message, variant: "destructive" });
     else { toast({ title: "Đã thêm bàn" }); setAddOpen(false); setName(""); fetchTables(); }
   };
 
   const handleRename = async () => {
-    if (!editTarget || !editName.trim()) return;
+    if (!editTarget || !editName.trim() || !validSeats(editSeats)) return;
     setSubmitting(true);
-    const { error } = await supabase.from("tables").update({ name: editName.trim() }).eq("id", editTarget.id);
+    const { error } = await supabase.from("tables").update({ name: editName.trim(), seats: Number(editSeats) }).eq("id", editTarget.id);
     setSubmitting(false);
     if (error) toast({ title: "Lỗi", description: error.message, variant: "destructive" });
-    else { toast({ title: "Đã đổi tên" }); setEditOpen(false); fetchTables(); }
+    else { toast({ title: "Đã cập nhật bàn" }); setEditOpen(false); fetchTables(); }
   };
 
   const handleDelete = async (t: TableRow) => {
@@ -89,7 +93,7 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
             className="pl-8 h-9"
           />
         </div>
-        <Button onClick={() => { setName(""); setAddOpen(true); }} className="ml-auto">
+        <Button onClick={() => { setName(""); setSeats(""); setAddOpen(true); }} className="ml-auto">
           <Plus className="mr-2 h-4 w-4" /> Thêm bàn
         </Button>
       </div>
@@ -104,14 +108,15 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
       ) : (
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {tables.filter(t => matchSearch(t.name, searchQuery)).map((t) => (
-            <Card key={t.id} className="text-center">
-              <CardContent className="p-4 space-y-2">
+            <Card key={t.id} className="relative text-center">
+              <TableSeatBadge seats={t.seats} />
+              <CardContent className="p-4 pt-10 space-y-2">
                 <p className="font-semibold">{t.name}</p>
                 <Badge variant={t.status === "empty" ? "outline" : "default"}>
                   {t.status === "empty" ? "Trống" : "Có khách"}
                 </Badge>
                 <div className="flex justify-center gap-1 pt-1">
-                  <Button variant="ghost" size="icon" onClick={() => { setEditTarget(t); setEditName(t.name); setEditOpen(true); }}>
+                  <Button variant="ghost" size="icon" title="Sửa bàn" aria-label={`Sửa ${t.name}`} onClick={() => { setEditTarget(t); setEditName(t.name); setEditSeats(t.seats?.toString() ?? ""); setEditOpen(true); }}>
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => handleDelete(t)}>
@@ -132,8 +137,12 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
             <Label>Tên bàn</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Bàn 1" />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="table-seats">Số ghế</Label>
+            <Input id="table-seats" type="number" min={1} max={999} step={1} value={seats} onChange={(e) => setSeats(e.target.value)} placeholder="4" />
+          </div>
           <DialogFooter>
-            <Button onClick={handleAdd} disabled={submitting || !name.trim()}>
+            <Button onClick={handleAdd} disabled={submitting || !name.trim() || !validSeats(seats)}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Thêm
             </Button>
           </DialogFooter>
@@ -143,13 +152,17 @@ export default function TableManagement({ restaurantId }: { restaurantId: string
       {/* Rename Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Đổi tên bàn</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Sửa bàn</DialogTitle></DialogHeader>
           <div className="space-y-2">
             <Label>Tên bàn mới</Label>
             <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-table-seats">Số ghế</Label>
+            <Input id="edit-table-seats" type="number" min={1} max={999} step={1} value={editSeats} onChange={(e) => setEditSeats(e.target.value)} placeholder="4" />
+          </div>
           <DialogFooter>
-            <Button onClick={handleRename} disabled={submitting || !editName.trim()}>
+            <Button onClick={handleRename} disabled={submitting || !editName.trim() || !validSeats(editSeats)}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu
             </Button>
           </DialogFooter>
