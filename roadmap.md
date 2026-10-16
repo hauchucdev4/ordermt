@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Gom bàn cùng số ghế thành các cụm dọc tăng dần; đổi màu huy hiệu khi có khách; đồng nhất nền bàn trong theme light và kiểm thử.
+- [x] Gom bàn cùng số ghế thành các cụm dọc tăng dần; nền bàn light đồng nhất; kiểm tra Order/Bàn trong phiên đăng nhập, 3 test số ghế đạt; màu có khách được thử ở lớp hiển thị, không thay đổi dữ liệu bàn thật.
 
 - [x] Thêm số ghế khi tạo/sửa bàn, huy hiệu tròn góc phải trong Order và xếp theo số ghế tăng dần; đã thử tạo, đọc lại sau tải trang và xóa bàn thử.
 
@@ -12,4 +12,4 @@
 - [x] Kiểm tra bản xem trước và lỗi biên dịch.
 
 - [x] Light theme: mỗi ô/table/card có nền xanh, tím hoặc trạng thái riêng, không dùng trắng trùng nền.
-- [ ] Kiểm tra trực quan tám mục sau khi đăng nhập: cần người dùng đăng nhập lại bản xem trước.
+- [ ] Kiểm tra trực quan sáu mục còn lại từ yêu cầu theme trước: Bếp, Thanh toán, Thực đơn, Nhân viên, Doanh thu, Lịch sử món; Order/Bàn đã kiểm tra trong phiên đăng nhập.
