@@ -318,19 +318,28 @@ export default function OrderStation({ restaurantId, restaurantName: propRestaur
 
   return (
     <>
-      <TableSeatGroups tables={tables} gridClassName="grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+      <TableSeatGroups tables={tables} gridClassName="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
         {table => {
           const overdueDate = openOrderDates[table.id];
           const overdue = overdueDate ? isOrderOverdue(overdueDate) : false;
           return (
-          <Card key={table.id} className={`table-tile relative cursor-pointer transition-all hover:shadow-md ${overdue ? "border-warning" : ""}`} onClick={() => openTable(table)}>
-            <TableSeatBadge seats={table.seats} occupied={table.status !== "empty"} />
-            <CardContent className="p-2 pt-10 min-h-24 h-full flex flex-col items-center justify-center gap-1">
-              <p className="w-full break-words text-center font-bold text-base leading-tight">{table.name}</p>
-              <Badge className={`text-[10px] px-1.5 py-0 ${table.status === "empty" ? "bg-primary/15 text-primary" : "bg-accent/15 text-accent"}`}>
-                {table.status === "empty" ? "Trống" : "Có khách"}
-              </Badge>
-              {overdue && <span className="text-center text-[10px] font-semibold leading-tight text-warning-foreground">Bill {formatOrderDate(overdueDate)} chưa thanh toán</span>}
+          <Card key={table.id} className={`table-tile relative cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${overdue ? "border-2 border-warning" : table.status !== "empty" ? "border-accent/60" : ""}`} onClick={() => openTable(table)}>
+            <CardContent className="flex h-full min-h-28 flex-col gap-2 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <p className="min-w-0 break-words font-bold text-base leading-tight">{table.name}</p>
+                <TableSeatBadge seats={table.seats} occupied={table.status !== "empty"} inline />
+              </div>
+              <div className="mt-auto flex flex-col items-start gap-1.5">
+                <Badge className={`text-[11px] px-2 py-0.5 ${table.status === "empty" ? "bg-primary/15 text-primary" : "bg-accent/20 text-accent"}`}>
+                  {table.status === "empty" ? "Trống" : "Có khách"}
+                </Badge>
+                {overdue && (
+                  <span className="flex w-full items-center gap-1 rounded-md bg-warning px-1.5 py-1 text-[10px] font-semibold leading-tight text-warning-foreground">
+                    <AlertTriangle className="h-3 w-3 shrink-0" />
+                    <span className="min-w-0">Bill {formatOrderDate(overdueDate)} chưa TT</span>
+                  </span>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}}
