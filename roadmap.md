@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Rà soát frontend/backend và tạo prompt tái tạo OrderMaster chi tiết, tách riêng công nghệ; ghi rõ khác biệt giữa hiện trạng và yêu cầu an toàn.
+
 - [x] Gom bàn cùng số ghế thành các cụm dọc tăng dần; nền bàn light đồng nhất; kiểm tra Order/Bàn trong phiên đăng nhập, 3 test số ghế đạt; màu có khách được thử ở lớp hiển thị, không thay đổi dữ liệu bàn thật.
 
 - [x] Thêm số ghế khi tạo/sửa bàn, huy hiệu tròn góc phải trong Order và xếp theo số ghế tăng dần; đã thử tạo, đọc lại sau tải trang và xóa bàn thử.
